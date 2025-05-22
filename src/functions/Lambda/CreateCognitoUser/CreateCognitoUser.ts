@@ -61,7 +61,7 @@ export const createCognitoUser =
 					new PutEventsCommand({
 						Entries: [
 							{
-								Source: "service.users",
+								Source: "service.cognito",
 								DetailType: "CognitoUserCreated",
 								EventBusName: eventBusName,
 								Detail: JSON.stringify({

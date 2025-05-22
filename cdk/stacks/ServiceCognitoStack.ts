@@ -1,10 +1,4 @@
-import {
-	NestedStack,
-	RemovalPolicy,
-	CfnOutput,
-	Duration,
-	Stack,
-} from "aws-cdk-lib";
+import { RemovalPolicy, Duration, Stack } from "aws-cdk-lib";
 import type { Construct } from "constructs";
 import {
 	UserPool,
@@ -15,7 +9,6 @@ import {
 	CfnIdentityPoolRoleAttachment,
 } from "aws-cdk-lib/aws-cognito";
 import type { CognitoStackProps } from "../types/stacks.types";
-
 import path from "node:path";
 import { FederatedPrincipal, PolicyStatement, Role } from "aws-cdk-lib/aws-iam";
 import { LogGroup } from "aws-cdk-lib/aws-logs";
@@ -155,7 +148,7 @@ export class ServiceCognitoStack extends Stack {
 			this,
 			`${serviceName}-create-cognito-user-lambda-${stage}`,
 			{
-				serviceName: "cdk-insights",
+				serviceName,
 				stage,
 				handlerName: "createCognitoUserHandler",
 				entryPath: createCognitoUserLambdaPath,
