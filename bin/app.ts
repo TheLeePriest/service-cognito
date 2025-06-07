@@ -6,7 +6,7 @@ const stage = process.env.STAGE || "dev";
 const eventBusName = process.env.EVENT_BUS_NAME || "event-bus";
 
 const app = new cdk.App();
-new ServiceCognitoStack(app, `ServiceCognitoStack-${stage}`, {
+new ServiceCognitoStack(app, `service-cognito-${stage}`, {
 	stage,
 	serviceName: "service-cognito",
 	eventBusName: `${eventBusName}-${stage}`,
