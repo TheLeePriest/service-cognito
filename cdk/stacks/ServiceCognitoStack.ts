@@ -10,11 +10,19 @@ import {
 } from "aws-cdk-lib/aws-cognito";
 import type { CognitoStackProps } from "../types/stacks.types";
 import path from "node:path";
-import { FederatedPrincipal, PolicyStatement, Role } from "aws-cdk-lib/aws-iam";
+import {
+	FederatedPrincipal,
+	PolicyStatement,
+	Role,
+	ServicePrincipal,
+} from "aws-cdk-lib/aws-iam";
 import { LogGroup } from "aws-cdk-lib/aws-logs";
 import { TSLambdaFunction } from "the-ldk";
 import { EventBus, Rule } from "aws-cdk-lib/aws-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
+import { StringParameter } from "aws-cdk-lib/aws-ssm";
+import { EmailIdentity, Identity } from "aws-cdk-lib/aws-ses";
+import { userInvitationHtml } from "../../src/email/html/userInvitation/userInvitation";
 
 export class ServiceCognitoStack extends Stack {
 	public readonly userPoolClient: UserPoolClient;
@@ -32,6 +40,48 @@ export class ServiceCognitoStack extends Stack {
 			eventBusName,
 		);
 
+		// const sesIdentity = new EmailIdentity(
+		// 	this,
+		// 	`${serviceName}-ses-identity-${stage}`,
+		// 	{
+		// 		identity: Identity.domain("cdkinsights.dev"),
+		// 	},
+		// );
+
+		const userInvitationEmailLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/Email/UserInvitation/UserInvitation.handler.ts",
+		);
+
+		const userInvitationEmailLogGroup = new LogGroup(
+			this,
+			`${serviceName}-user-invitation-email-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-user-invitation-email-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const userInvitationEmailLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-user-invitation-email-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "userInvitationHandler",
+				entryPath: userInvitationEmailLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-user-invitation-email-${stage}`,
+				customOptions: {
+					logGroup: userInvitationEmailLogGroup,
+					timeout: Duration.seconds(10),
+					memorySize: 128,
+				},
+			},
+		);
+
 		const userPool = new UserPool(this, `${serviceName}user-pool-${stage}`, {
 			userPoolName: `${serviceName}-user-pool-${stage}`,
 			selfSignUpEnabled: true,
@@ -42,7 +92,11 @@ export class ServiceCognitoStack extends Stack {
 				email: true,
 			},
 			removalPolicy: RemovalPolicy.DESTROY,
-			email: UserPoolEmail.withCognito(),
+			email: UserPoolEmail.withSES({
+				fromEmail: "noreply@cdkinsights.dev",
+				fromName: "CDK Insights",
+				replyTo: "support@cdkinsights.dev",
+			}),
 			customAttributes: {
 				subscriptionTier: new StringAttribute({
 					mutable: true,
@@ -51,7 +105,26 @@ export class ServiceCognitoStack extends Stack {
 				}),
 				stripeCustomerId: new StringAttribute({ mutable: true, maxLen: 100 }),
 				apiKeyId: new StringAttribute({ mutable: true, maxLen: 100 }),
+				name: new StringAttribute({ mutable: true, maxLen: 100 }),
 			},
+			lambdaTriggers: {
+				customMessage: userInvitationEmailLambda.tsLambdaFunction,
+			},
+		});
+
+		userInvitationEmailLambda.tsLambdaFunction.addPermission(
+			"AllowCognitoInvoke",
+			{
+				principal: new ServicePrincipal("cognito-idp.amazonaws.com"),
+				action: "lambda:InvokeFunction",
+				sourceArn: userPool.userPoolArn,
+			},
+		);
+
+		new StringParameter(this, `${serviceName}-user-pool-id-param`, {
+			parameterName: `/${stage}/userPoolId`,
+			stringValue: userPool.userPoolId,
+			description: `Cognito User Pool ID for ${serviceName}`,
 		});
 
 		this.userPoolClient = new UserPoolClient(

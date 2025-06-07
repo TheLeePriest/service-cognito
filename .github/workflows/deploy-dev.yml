@@ -1,21 +1,26 @@
-name: CI/CD Pipeline
+name: Dev CI/CD Pipeline
+
+permissions:
+  id-token: write
+  contents: read
 
 on:
   push:
     branches:
       - main
-      - develop
-      - sandbox
+      
   pull_request:
 
 env:
-  AWS_REGION: us-east-1
-  STACK_NAME: my-app
+  AWS_REGION: eu-west-2
+  STACK_NAME: service-ai-analysis
+  STAGE: dev
 
 jobs:
-  deploy:
-    name: Deploy to AWS
+  deploy-dev:
+    name: Deploy to AWS (Dev)
     runs-on: ubuntu-latest
+    environment: development
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -23,16 +28,15 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: lts/*
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEV }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Install AWS CDK
@@ -40,7 +44,7 @@ jobs:
 
       - name: Deploy Stack
         run: |
-          cdk deploy ${STACK_NAME} --require-approval never || {
+          cdk deploy --require-approval never || {
             echo '❌ Deployment failed. Checking rollback options...';
             if [ "$AUTO_ROLLBACK" == "yes" ]; then
               echo '🔄 Rolling back...';
@@ -49,7 +53,3 @@ jobs:
               echo '🛑 Manual rollback required!';
             fi
           }
-
-      - name: Set CloudWatch Log Retention
-        run: |
-          aws logs put-retention-policy --log-group-name "/ci-cd/rollbacks" --retention-in-days $LOG_RETENTION_DAYS

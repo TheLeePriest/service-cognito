@@ -47,6 +47,8 @@ export type StripeCustomerCreated = {
 	trialEndDate: string;
 	cancelAtPeriodEnd: boolean;
 	organization: string;
+	firstName: string;
+	lastName: string;
 	createdAt: string;
 	updatedAt: string;
 };
@@ -55,3 +57,7 @@ export type UserCreatedEvent = EventBridgeEvent<
 	"CustomerCreated",
 	StripeCustomerCreated
 >;
+
+export type UserAttributesObject = {
+	sub: string;
+};
