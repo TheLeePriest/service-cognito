@@ -96,6 +96,7 @@ export class ServiceCognitoStack extends Stack {
 				fromEmail: "noreply@cdkinsights.dev",
 				fromName: "CDK Insights",
 				replyTo: "support@cdkinsights.dev",
+				sesRegion: "eu-west-2",
 			}),
 			customAttributes: {
 				subscriptionTier: new StringAttribute({
