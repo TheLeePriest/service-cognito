@@ -92,12 +92,13 @@ export class ServiceCognitoStack extends Stack {
 				email: true,
 			},
 			removalPolicy: RemovalPolicy.DESTROY,
-			email: UserPoolEmail.withSES({
-				fromEmail: "noreply@cdkinsights.dev",
-				fromName: "CDK Insights",
-				replyTo: "support@cdkinsights.dev",
-				sesRegion: "eu-west-2",
-			}),
+			email: UserPoolEmail.withCognito(),
+			// email: UserPoolEmail.withSES({
+			// 	fromEmail: "noreply@cdkinsights.dev",
+			// 	fromName: "CDK Insights",
+			// 	replyTo: "support@cdkinsights.dev",
+			// 	sesRegion: "eu-west-2",
+			// }),
 			customAttributes: {
 				subscriptionTier: new StringAttribute({
 					mutable: true,
