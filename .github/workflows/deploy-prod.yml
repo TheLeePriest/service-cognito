@@ -11,6 +11,7 @@ env:
   AWS_REGION: eu-west-2
   STACK_NAME: service-cognito
   STAGE: prod
+  EVENT_BUS_NAME: service-eventbridge-event-bus
 
 jobs:
   deploy-prod:
