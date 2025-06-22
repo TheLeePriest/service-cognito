@@ -40,20 +40,6 @@ export class ServiceCognitoStack extends Stack {
 			`${serviceName}-event-bus-${stage}`,
 			eventBusName,
 		);
-		// Lookup existing Route53 hosted zone for SES domain verification
-		const hostedZone = HostedZone.fromLookup(
-			this,
-			`${serviceName}-hosted-zone-${stage}`,
-			{
-				domainName: "cdkinsights.dev",
-			},
-		);
-
-		const sesIdentity = EmailIdentity.fromEmailIdentityName(
-			this,
-			`${serviceName}-test-ses-identity-${stage}`,
-			"cdkinsights.dev",
-		);
 
 		const userInvitationEmailLambdaPath = path.join(
 			__dirname,
@@ -99,13 +85,14 @@ export class ServiceCognitoStack extends Stack {
 				email: true,
 			},
 			removalPolicy: RemovalPolicy.DESTROY,
-			email: UserPoolEmail.withSES({
-				fromEmail: "noreply@cdkinsights.dev",
-				fromName: "CDK Insights",
-				replyTo: "support@cdkinsights.dev",
-				sesRegion: "eu-west-2",
-				sesVerifiedDomain: "cdkinsights.dev",
-			}),
+			email: UserPoolEmail.withCognito(),
+			// email: UserPoolEmail.withSES({
+			// 	fromEmail: "noreply@cdkinsights.dev",
+			// 	fromName: "CDK Insights",
+			// 	replyTo: "support@cdkinsights.dev",
+			// 	sesRegion: "eu-west-2",
+			// 	sesVerifiedDomain: "cdkinsights.dev",
+			// }),
 			customAttributes: {
 				subscriptionTier: new StringAttribute({
 					mutable: true,
