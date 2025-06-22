@@ -11,7 +11,7 @@ new ServiceCognitoStack(app, `service-cognito-${stage}`, {
 	serviceName: "service-cognito",
 	eventBusName: `${eventBusName}-${stage}`,
 	env: {
-		account: app.account,
-		region: app.region,
+		account: process.env.CDK_DEFAULT_ACCOUNT ?? app.account,
+		region: process.env.CDK_DEFAULT_REGION ?? app.region,
 	},
 });
