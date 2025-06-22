@@ -10,4 +10,8 @@ new ServiceCognitoStack(app, `service-cognito-${stage}`, {
 	stage,
 	serviceName: "service-cognito",
 	eventBusName: `${eventBusName}-${stage}`,
+	env: {
+		account: app.account,
+		region: app.region,
+	},
 });

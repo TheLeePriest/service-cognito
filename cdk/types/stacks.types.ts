@@ -1,6 +1,6 @@
-import type { NestedStackProps } from "aws-cdk-lib";
+import type { StackProps } from "aws-cdk-lib";
 
-export type CognitoStackProps = NestedStackProps & {
+export type CognitoStackProps = StackProps & {
 	stage: string;
 	serviceName: string;
 	eventBusName: string;
