@@ -49,12 +49,10 @@ export class ServiceCognitoStack extends Stack {
 			},
 		);
 
-		const sesIdentity = new EmailIdentity(
+		const sesIdentity = EmailIdentity.fromEmailIdentityName(
 			this,
-			`${serviceName}-ses-identity-${stage}`,
-			{
-				identity: Identity.publicHostedZone(hostedZone),
-			},
+			`${serviceName}-test-ses-identity-${stage}`,
+			"cdkinsights.dev",
 		);
 
 		const userInvitationEmailLambdaPath = path.join(
