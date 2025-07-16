@@ -1,19 +1,20 @@
 import type { CustomMessageTriggerEvent } from "aws-lambda";
-import { userInvitationHtml } from "../../../../email/html/userInvitation/userInvitation";
+import { logger } from "../../../../shared/logging/logger";
 
-export const userInvitation = async (
-	event: CustomMessageTriggerEvent,
-): Promise<CustomMessageTriggerEvent> => {
-	console.log(event, "event");
-	const trigger = event.triggerSource;
-	const firstName = event.request.userAttributes.name.split(" ")[0] || "";
-	console.log(trigger, "trigger");
-	if (
-		trigger === "CustomMessage_AdminCreateUser" ||
-		trigger === "CustomMessage_SignUp"
-	) {
-		event.response.emailSubject = `Welcome to CDK-Insights, ${firstName}!`;
-		event.response.emailMessage = userInvitationHtml(firstName);
-	}
-	return event;
+export const userInvitation = async (event: CustomMessageTriggerEvent) => {
+  const requestId = `user-invitation-${Date.now()}`;
+  const context = { requestId, functionName: "userInvitation" };
+  
+  logger.logFunctionStart("userInvitation", context);
+  logger.info("Processing user invitation event", context, { triggerSource: event.triggerSource });
+
+  const trigger = event.triggerSource;
+  logger.info("Trigger source", context, { trigger });
+
+  // Add your custom logic here for handling user invitations
+  // For example, you might want to customize the email template
+  // or add additional validation
+
+  logger.logFunctionEnd("userInvitation", Date.now(), context);
+  return event;
 };

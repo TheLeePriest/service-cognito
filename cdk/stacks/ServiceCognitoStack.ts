@@ -197,34 +197,34 @@ export class ServiceCognitoStack extends Stack {
 			},
 		);
 
-		const createCognitoUserLambdaPath = path.join(
+		const customerCreatedLambdaPath = path.join(
 			__dirname,
-			"../../src/functions/Lambda/CreateCognitoUser/CreateCognitoUser.handler.ts",
+			"../../src/functions/Lambda/CustomerCreated/CustomerCreated.handler.ts",
 		);
 
-		const createCognitoUserLogGroup = new LogGroup(
+		const customerCreatedLogGroup = new LogGroup(
 			this,
-			`${serviceName}-user-stream-log-group-${stage}`,
+			`${serviceName}-customer-created-log-group-${stage}`,
 			{
-				logGroupName: `/aws/lambda/${serviceName}-create-cognito-user-${stage}`,
+				logGroupName: `/aws/lambda/${serviceName}-customer-created-${stage}`,
 				retention: 7,
 				removalPolicy:
 					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
 			},
 		);
 
-		const createCognitoUserLambda = new TSLambdaFunction(
+		const customerCreatedLambda = new TSLambdaFunction(
 			this,
-			`${serviceName}-create-cognito-user-lambda-${stage}`,
+			`${serviceName}-customer-created-lambda-${stage}`,
 			{
 				serviceName,
 				stage,
-				handlerName: "createCognitoUserHandler",
-				entryPath: createCognitoUserLambdaPath,
+				handlerName: "handler",
+				entryPath: customerCreatedLambdaPath,
 				tsConfigPath,
-				functionName: `${serviceName}-create-cognito-user-${stage}`,
+				functionName: `${serviceName}-customer-created-${stage}`,
 				customOptions: {
-					logGroup: createCognitoUserLogGroup,
+					logGroup: customerCreatedLogGroup,
 					timeout: Duration.seconds(30),
 					memorySize: 256,
 					environment: {
@@ -235,9 +235,9 @@ export class ServiceCognitoStack extends Stack {
 			},
 		);
 
-		eventBus.grantPutEventsTo(createCognitoUserLambda.tsLambdaFunction);
+		eventBus.grantPutEventsTo(customerCreatedLambda.tsLambdaFunction);
 
-		createCognitoUserLambda.tsLambdaFunction.addToRolePolicy(
+		customerCreatedLambda.tsLambdaFunction.addToRolePolicy(
 			new PolicyStatement({
 				actions: [
 					"cognito-idp:AdminCreateUser",
@@ -248,12 +248,12 @@ export class ServiceCognitoStack extends Stack {
 			}),
 		);
 
-		const createCognitoUserRule = new Rule(
+		const customerCreatedRule = new Rule(
 			this,
-			`${serviceName}-subscription-conductor-rule-${stage}`,
+			`${serviceName}-customer-created-rule-${stage}`,
 			{
 				eventBus,
-				ruleName: `${serviceName}-subscription-conductor-rule-${stage}`,
+				ruleName: `${serviceName}-customer-created-rule-${stage}`,
 				eventPattern: {
 					source: ["service.stripe"],
 					detailType: ["CustomerCreated"],
@@ -261,8 +261,8 @@ export class ServiceCognitoStack extends Stack {
 			},
 		);
 
-		createCognitoUserRule.addTarget(
-			new LambdaFunction(createCognitoUserLambda.tsLambdaFunction),
+		customerCreatedRule.addTarget(
+			new LambdaFunction(customerCreatedLambda.tsLambdaFunction),
 		);
 	}
 }

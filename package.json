@@ -1,36 +1,51 @@
 {
-	"name": "service-cognito",
-	"version": "1.0.0",
-	"description": "An AWS CDK microservice that creates and manages Cognito resources",
-	"main": "index.js",
-	"scripts": {
-		"test": "vitest",
-		"deploy:dev": "EVENT_BUS_NAME=service-eventbridge-event-bus STAGE=dev cdk deploy",
-		"destroy:dev": "EVENT_BUS_NAME=service-eventbridge-event-bus STAGE=dev cdk destroy"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/TheLeePriest/service-cognito.git"
-	},
-	"author": "Lee Priest",
-	"license": "ISC",
-	"bugs": {
-		"url": "https://github.com/TheLeePriest/service-cognito/issues"
-	},
-	"homepage": "https://github.com/TheLeePriest/service-cognito#readme",
-	"devDependencies": {
-		"@biomejs/biome": "1.9.4",
-		"@types/node": "^22.15.18",
-		"aws-cdk": "^2.1016.0",
-		"esbuild": "^0.25.4",
-		"typescript": "^5.8.3",
-		"vitest": "^3.1.3"
-	},
-	"dependencies": {
-		"@aws-sdk/client-cognito-identity-provider": "^3.812.0",
-		"@aws-sdk/client-eventbridge": "^3.812.0",
-		"@types/aws-lambda": "^8.10.149",
-		"aws-cdk-lib": "^2.196.0",
-		"the-ldk": "^1.0.6"
-	}
+  "name": "service-cognito",
+  "version": "1.0.0",
+  "description": "An AWS CDK microservice that creates and manages Cognito resources",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest",
+    "deploy:dev": "EVENT_BUS_NAME=service-eventbridge-event-bus STAGE=dev cdk deploy",
+    "destroy:dev": "EVENT_BUS_NAME=service-eventbridge-event-bus STAGE=dev cdk destroy",
+    "release:patch": "bumper release patch",
+    "release:minor": "bumper release minor",
+    "release:major": "bumper release major",
+    "release:dry-run": "./node_modules/.bin/bumper release patch --dry-run",
+    "changelog:preview": "bumper preview",
+    "changelog:generate": "./node_modules/.bin/bumper generate",
+    "validate:commits": "bumper validate",
+    "setup:bumper": "bumper setup"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheLeePriest/service-cognito.git"
+  },
+  "author": "Lee Priest",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TheLeePriest/service-cognito/issues"
+  },
+  "homepage": "https://github.com/TheLeePriest/service-cognito#readme",
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@types/node": "^22.15.18",
+    "aws-cdk": "^2.1016.0",
+    "bumper-cli": "^1.6.0",
+    "esbuild": "^0.25.4",
+    "husky": "^9.1.7",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.3"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.812.0",
+    "@aws-sdk/client-eventbridge": "^3.812.0",
+    "@types/aws-lambda": "^8.10.149",
+    "aws-cdk-lib": "^2.196.0",
+    "envolution": "^1.3.0",
+    "strogger": "^2.0.3",
+    "the-ldk": "^1.0.6",
+    "zod": "^3.25.76"
+  }
 }
