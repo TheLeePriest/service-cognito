@@ -5,3 +5,8 @@ export type CognitoStackProps = StackProps & {
 	serviceName: string;
 	eventBusName: string;
 };
+
+export type WorkMailStackProps = StackProps & {
+	stage: string;
+	serviceName: string;
+};
