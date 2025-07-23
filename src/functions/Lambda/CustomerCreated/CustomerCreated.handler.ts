@@ -40,3 +40,6 @@ export const customerCreatedHandler = customerCreated({
   eventBusName,
   logger,
 });
+
+// Export as default handler for Lambda runtime
+export const handler = customerCreatedHandler;

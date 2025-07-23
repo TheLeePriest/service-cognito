@@ -75,13 +75,6 @@ export class ServiceCognitoStack extends Stack {
 			},
 		);
 
-		// Import SES identity from infrastructure stack
-		const sesIdentity = EmailIdentity.fromEmailIdentityName(
-			this,
-			"ImportedSESIdentity",
-			`${serviceName}-ses-identity-${stage}`,
-		);
-
 		const userPool = new UserPool(this, `${serviceName}user-pool-${stage}`, {
 			userPoolName: `${serviceName}-user-pool-${stage}`,
 			selfSignUpEnabled: true,
@@ -92,13 +85,15 @@ export class ServiceCognitoStack extends Stack {
 				email: true,
 			},
 			removalPolicy: RemovalPolicy.DESTROY,
-			email: UserPoolEmail.withSES({
-				fromEmail: stage === "dev" ? "noreply@dev.cdkinsights.dev" : "noreply@cdkinsights.dev",
-				fromName: "CDK Insights",
-				replyTo: stage === "dev" ? "support@dev.cdkinsights.dev" : "support@cdkinsights.dev",
-				sesRegion: "eu-west-2",
-				sesVerifiedDomain: stage === "dev" ? "dev.cdkinsights.dev" : "cdkinsights.dev",
-			}),
+			email: UserPoolEmail.withCognito(),
+			// TODO: Re-enable SES integration once domain verification is complete
+			// email: UserPoolEmail.withSES({
+			// 	fromEmail: stage === "dev" ? "noreply@dev.cdkinsights.dev" : "noreply@cdkinsights.dev",
+			// 	fromName: "CDK Insights",
+			// 	replyTo: stage === "dev" ? "support@dev.cdkinsights.dev" : "support@cdkinsights.dev",
+			// 	sesRegion: "eu-west-2",
+			// 	sesVerifiedDomain: stage === "dev" ? "dev.cdkinsights.dev" : "cdkinsights.dev",
+			// }),
 			customAttributes: {
 				subscriptionTier: new StringAttribute({
 					mutable: true,
@@ -138,12 +133,6 @@ export class ServiceCognitoStack extends Stack {
 			value: userPool.userPoolId,
 			description: "Cognito User Pool ID",
 			exportName: `${serviceName}-user-pool-id-${stage}`,
-		});
-
-		new CfnOutput(this, "SESEmailConfiguration", {
-			value: `SES Email configured for ${stage === "dev" ? "dev.cdkinsights.dev" : "cdkinsights.dev"}`,
-			description: "SES Email Configuration Status",
-			exportName: `${serviceName}-ses-email-config-${stage}`,
 		});
 
 		this.userPoolClient = new UserPoolClient(
