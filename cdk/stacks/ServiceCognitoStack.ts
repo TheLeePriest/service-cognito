@@ -85,16 +85,13 @@ export class ServiceCognitoStack extends Stack {
 				email: true,
 			},
 			removalPolicy: RemovalPolicy.DESTROY,
-					email: UserPoolEmail.withCognito(),
-		// TODO: Re-enable SES integration once WorkMail is set up
-		// See service-cdk-insights-infrastructure/docs/workmail-setup-guide.md for detailed instructions
-		// email: UserPoolEmail.withSES({
-		// 	fromEmail: stage === "dev" ? "noreply@dev.cdkinsights.dev" : "noreply@cdkinsights.dev",
-		// 	fromName: "CDK Insights",
-		// 	replyTo: stage === "dev" ? "support@dev.cdkinsights.dev" : "support@cdkinsights.dev",
-		// 	sesRegion: "eu-west-2",
-		// 	sesVerifiedDomain: stage === "dev" ? "dev.cdkinsights.dev" : "cdkinsights.dev",
-		// }),
+		email: UserPoolEmail.withSES({
+			fromEmail: "support@cdkinsights.awsapps.com",
+			fromName: "CDK Insights",
+			replyTo: "support@cdkinsights.awsapps.com",
+			sesRegion: "eu-west-1",
+			sesVerifiedDomain: "cdkinsights.awsapps.com",
+		}),
 			customAttributes: {
 				subscriptionTier: new StringAttribute({
 					mutable: true,
