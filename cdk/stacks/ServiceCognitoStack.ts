@@ -85,13 +85,15 @@ export class ServiceCognitoStack extends Stack {
 				email: true,
 			},
 			removalPolicy: RemovalPolicy.DESTROY,
-		email: UserPoolEmail.withSES({
-			fromEmail: "support@cdkinsights.awsapps.com",
-			fromName: "CDK Insights",
-			replyTo: "support@cdkinsights.awsapps.com",
-			sesRegion: "eu-west-1",
-			sesVerifiedDomain: "cdkinsights.awsapps.com",
-		}),
+		email: stage === "prod" 
+			? UserPoolEmail.withSES({
+				fromEmail: "support@cdkinsights.awsapps.com",
+				fromName: "CDK Insights",
+				replyTo: "support@cdkinsights.awsapps.com",
+				sesRegion: "eu-west-1",
+				sesVerifiedDomain: "cdkinsights.awsapps.com",
+			})
+			: UserPoolEmail.withCognito(),
 			customAttributes: {
 				subscriptionTier: new StringAttribute({
 					mutable: true,
