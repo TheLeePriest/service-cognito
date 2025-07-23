@@ -85,15 +85,16 @@ export class ServiceCognitoStack extends Stack {
 				email: true,
 			},
 			removalPolicy: RemovalPolicy.DESTROY,
-			email: UserPoolEmail.withCognito(),
-			// TODO: Re-enable SES integration once domain verification is complete
-			// email: UserPoolEmail.withSES({
-			// 	fromEmail: stage === "dev" ? "noreply@dev.cdkinsights.dev" : "noreply@cdkinsights.dev",
-			// 	fromName: "CDK Insights",
-			// 	replyTo: stage === "dev" ? "support@dev.cdkinsights.dev" : "support@cdkinsights.dev",
-			// 	sesRegion: "eu-west-2",
-			// 	sesVerifiedDomain: stage === "dev" ? "dev.cdkinsights.dev" : "cdkinsights.dev",
-			// }),
+					email: UserPoolEmail.withCognito(),
+		// TODO: Re-enable SES integration once specific email addresses are verified
+		// The domain is verified, but specific email addresses need to be verified too
+		// email: UserPoolEmail.withSES({
+		// 	fromEmail: stage === "dev" ? "noreply@dev.cdkinsights.dev" : "noreply@cdkinsights.dev",
+		// 	fromName: "CDK Insights",
+		// 	replyTo: stage === "dev" ? "noreply@dev.cdkinsights.dev" : "noreply@cdkinsights.dev",
+		// 	sesRegion: "eu-west-2",
+		// 	sesVerifiedDomain: stage === "dev" ? "dev.cdkinsights.dev" : "cdkinsights.dev",
+		// }),
 			customAttributes: {
 				subscriptionTier: new StringAttribute({
 					mutable: true,
