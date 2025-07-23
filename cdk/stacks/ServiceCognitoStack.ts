@@ -1,4 +1,4 @@
-import { RemovalPolicy, Duration, Stack } from "aws-cdk-lib";
+import { RemovalPolicy, Duration, Stack, CfnOutput } from "aws-cdk-lib";
 import type { Construct } from "constructs";
 import {
 	UserPool,
@@ -75,6 +75,13 @@ export class ServiceCognitoStack extends Stack {
 			},
 		);
 
+		// Import SES identity from infrastructure stack
+		const sesIdentity = EmailIdentity.fromEmailIdentityName(
+			this,
+			"ImportedSESIdentity",
+			`${serviceName}-ses-identity-${stage}`,
+		);
+
 		const userPool = new UserPool(this, `${serviceName}user-pool-${stage}`, {
 			userPoolName: `${serviceName}-user-pool-${stage}`,
 			selfSignUpEnabled: true,
@@ -85,14 +92,13 @@ export class ServiceCognitoStack extends Stack {
 				email: true,
 			},
 			removalPolicy: RemovalPolicy.DESTROY,
-			email: UserPoolEmail.withCognito(),
-			// email: UserPoolEmail.withSES({
-			// 	fromEmail: "noreply@cdkinsights.dev",
-			// 	fromName: "CDK Insights",
-			// 	replyTo: "support@cdkinsights.dev",
-			// 	sesRegion: "eu-west-2",
-			// 	sesVerifiedDomain: "cdkinsights.dev",
-			// }),
+			email: UserPoolEmail.withSES({
+				fromEmail: stage === "dev" ? "noreply@dev.cdkinsights.dev" : "noreply@cdkinsights.dev",
+				fromName: "CDK Insights",
+				replyTo: stage === "dev" ? "support@dev.cdkinsights.dev" : "support@cdkinsights.dev",
+				sesRegion: "eu-west-2",
+				sesVerifiedDomain: stage === "dev" ? "dev.cdkinsights.dev" : "cdkinsights.dev",
+			}),
 			customAttributes: {
 				subscriptionTier: new StringAttribute({
 					mutable: true,
@@ -117,10 +123,27 @@ export class ServiceCognitoStack extends Stack {
 			},
 		);
 
+		// Grant Cognito permission to send emails via SES
+		// The SES integration will handle permissions automatically
+		// when using UserPoolEmail.withSES()
+
 		new StringParameter(this, `${serviceName}-user-pool-id-param`, {
 			parameterName: `/${stage}/userPoolId`,
 			stringValue: userPool.userPoolId,
 			description: `Cognito User Pool ID for ${serviceName}`,
+		});
+
+		// Outputs for verification
+		new CfnOutput(this, "UserPoolId", {
+			value: userPool.userPoolId,
+			description: "Cognito User Pool ID",
+			exportName: `${serviceName}-user-pool-id-${stage}`,
+		});
+
+		new CfnOutput(this, "SESEmailConfiguration", {
+			value: `SES Email configured for ${stage === "dev" ? "dev.cdkinsights.dev" : "cdkinsights.dev"}`,
+			description: "SES Email Configuration Status",
+			exportName: `${serviceName}-ses-email-config-${stage}`,
 		});
 
 		this.userPoolClient = new UserPoolClient(
