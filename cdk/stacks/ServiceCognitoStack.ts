@@ -242,7 +242,7 @@ export class ServiceCognitoStack extends Stack {
 			{
 				serviceName,
 				stage,
-				handlerName: "handler",
+				handlerName: "customerCreatedHandler",
 				entryPath: customerCreatedLambdaPath,
 				tsConfigPath,
 				functionName: `${serviceName}-customer-created-${stage}`,
