@@ -87,7 +87,7 @@ export class ServiceCognitoStack extends Stack {
 			removalPolicy: RemovalPolicy.DESTROY,
 					email: UserPoolEmail.withCognito(),
 		// TODO: Re-enable SES integration once WorkMail is set up
-		// See docs/workmail-setup-guide.md for detailed instructions
+		// See service-cdk-insights-infrastructure/docs/workmail-setup-guide.md for detailed instructions
 		// email: UserPoolEmail.withSES({
 		// 	fromEmail: stage === "dev" ? "noreply@dev.cdkinsights.dev" : "noreply@cdkinsights.dev",
 		// 	fromName: "CDK Insights",
