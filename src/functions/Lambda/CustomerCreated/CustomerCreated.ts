@@ -111,7 +111,6 @@ export const customerCreated =
 							: []),
 					],
 					TemporaryPassword: tempPassword,
-					MessageAction: "RESEND", // Send welcome email with custom template
 				}),
 			)) as AdminCreateUserCommandOutput;
 
