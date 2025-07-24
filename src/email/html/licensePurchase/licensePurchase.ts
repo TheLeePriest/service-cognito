@@ -1,9 +1,9 @@
-export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
+export const licensePurchaseHtml = (displayName: string, licenseType: string, licenseKey: string) => `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to CDK-Insights</title>
+  <title>License Purchase Confirmation - CDK-Insights</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -37,7 +37,7 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
                 "
               />
               <h1 style="margin:0; font-size:36px; font-weight:bold;">
-                Welcome to CDK-Insights!
+                License Purchase Confirmed! 🎉
               </h1>
             </td>
           </tr>
@@ -46,49 +46,51 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
           <tr>
             <td style="background-color:#000d0a; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
-                Hi there ${displayName} {username} 👋🏻,
+                Hi there ${displayName} 👋🏻,
               </h2>
               <p style="text-align:center; margin:10px 0;">
-                We're thrilled to welcome you to CDK-Insights! Your account has been created,
-                and you're just a few steps away from enhancing your AWS CDK development
-                experience.
+                Thank you for purchasing a CDK-Insights license! Your payment has been processed successfully,
+                and your license is now active.
               </p>
             </td>
           </tr>
 
+          <!-- License Details Section -->
           <tr>
             <td style="background-color:#00140f; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
-                Important: Your Temporary Password
+                Your License Details
               </h2>
-              <p style="text-align:center; margin:10px 0;">
-                A temporary password has been generated for your account. You will be required
-                to change this password when you log in for the first time.
-              </p>
-              <p
-                style="
-                  background-color:#515A58;
-                  color:#fcf9f4;
-                  padding:10px;
-                  border-radius:12px;
-                  text-align:center;
-                  margin:10px 0;
-                "
-                aria-label="Temporary Password"
-              >
-                Temporary Password: <strong>{####}</strong>
-              </p>
-              <p style="text-align:center; margin:10px 0;">
-                For security reasons, please ensure you change this password immediately upon
-                your first login.
-              </p>
+              <div style="background-color:#515A58; padding:20px; border-radius:12px; margin:20px 0;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="padding:10px 0;">
+                      <strong>License Type:</strong> ${licenseType}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:10px 0;">
+                      <strong>License Key:</strong> 
+                      <span style="font-family: monospace; background-color:#000d0a; padding:5px 10px; border-radius:6px;">
+                        ${licenseKey}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:10px 0;">
+                      <strong>Status:</strong> <span style="color:#5da38a;">✅ Active</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
             </td>
           </tr>
 
+          <!-- Features Section -->
           <tr>
             <td style="background-color:#000d0a; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
-                With CDK-Insights, you'll be able to:
+                What's Included in Your ${licenseType} License:
               </h2>
               <table
                 width="100%"
@@ -100,41 +102,42 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
                 <tr>
                   <td align="center" width="33%" style="padding:10px;">
                     <div style="font-size:24px; margin-bottom:10px;" aria-hidden="true" role="presentation">
-                      📊
+                      🚀
                     </div>
-                    <p style="margin:0;">Gain insights on your CDK stacks</p>
+                    <p style="margin:0;">Advanced CDK Analysis</p>
                   </td>
                   <td align="center" width="33%" style="padding:10px;">
                     <div style="font-size:24px; margin-bottom:10px;" aria-hidden="true" role="presentation">
-                      💰
+                      📊
                     </div>
-                    <p style="margin:0;">Optimize your infrastructure costs</p>
+                    <p style="margin:0;">Detailed Cost Reports</p>
                   </td>
                   <td align="center" width="33%" style="padding:10px;">
                     <div style="font-size:24px; margin-bottom:10px;" aria-hidden="true" role="presentation">
                       🔒
                     </div>
-                    <p style="margin:0;">Improve security and compliance</p>
+                    <p style="margin:0;">Security Insights</p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
+          <!-- Next Steps Section -->
           <tr>
             <td style="background-color:#00140f; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
                 Getting Started
               </h2>
               <ol style="padding-left:40px; margin:10px 0;">
-                <li>Click the button below to go to the login page</li>
-                <li>Enter your email address and the temporary password provided above</li>
-                <li>You will be prompted to set a new password</li>
-                <li>Once your new password is set, you'll have full access to CDK-Insights</li>
+                <li>Log in to your CDK-Insights dashboard</li>
+                <li>Enter your license key when prompted</li>
+                <li>Start analyzing your CDK stacks</li>
+                <li>Explore the advanced features available with your license</li>
               </ol>
               <div style="text-align:center; margin:20px 0;">
                 <a
-                  href="https://main.d3dnmattfmekt9.amplifyapp.com/login"
+                  href="https://main.d3dnmattfmekt9.amplifyapp.com/dashboard"
                   style="
                     display:inline-block;
                     background-color:#5da38a;
@@ -145,15 +148,25 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
                     margin-top:20px;
                   "
                 >
-                  Log In to CDK-Insights
+                  Go to Dashboard
                 </a>
               </div>
+            </td>
+          </tr>
+
+          <!-- Support Section -->
+          <tr>
+            <td style="background-color:#000d0a; padding:20px;">
+              <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
+                Need Help?
+              </h2>
               <p style="text-align:center; margin:10px 0;">
-                If you have any questions or need assistance, don't hesitate to reach out to
-                our support team at support@cdk-insights.com.
+                Our support team is here to help you get the most out of CDK-Insights.
+                Don't hesitate to reach out if you have any questions!
               </p>
               <p style="text-align:center; margin:10px 0;">
-                Best regards,<br />The CDK-Insights Team
+                📧 <a href="mailto:support@cdkinsights.dev" style="color:#5da38a;">support@cdkinsights.dev</a><br />
+                📖 <a href="https://docs.cdkinsights.dev" style="color:#5da38a;">Documentation</a>
               </p>
             </td>
           </tr>
@@ -170,4 +183,4 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
     </tr>
   </table>
 </body>
-</html>`;
+</html>`; 

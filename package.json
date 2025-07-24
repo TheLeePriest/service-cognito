@@ -14,7 +14,14 @@
     "changelog:preview": "bumper preview",
     "changelog:generate": "./node_modules/.bin/bumper generate",
     "validate:commits": "bumper validate",
-    "setup:bumper": "bumper setup"
+    "setup:bumper": "bumper setup",
+    "test:email": "tsx scripts/test-email-template.ts",
+    "test:license-email": "tsx scripts/test-license-email.ts",
+    "test:cognito-user": "tsx scripts/test-cognito-user-creation.ts",
+    "check-user": "tsx scripts/check-user-status.ts",
+    "check-config": "tsx scripts/check-cognito-config.ts",
+    "fix-user": "tsx scripts/fix-user-email.ts",
+    "test-license-flow": "tsx scripts/check-license-purchase-flow.ts"
   },
   "repository": {
     "type": "git",
@@ -35,6 +42,7 @@
     "bumper-cli": "^1.6.0",
     "esbuild": "^0.25.4",
     "husky": "^9.1.7",
+    "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "vitest": "^3.1.3"
   },
