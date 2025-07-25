@@ -149,12 +149,16 @@ export const customerCreated =
 				"service.cognito",
 				"CognitoUserCreated",
 				{
-					cognitoUserId: createUserResult.User.Username,
-					cognitoSub: userAttributes.sub,
-					customerId: stripeCustomerId,
-					customerEmail: email,
-					customerName,
+					userId: userAttributes.sub, // Use Cognito sub as userId
+					userName: email, // Use email as userName
+					cdkInsightsId: userAttributes.sub, // Use Cognito sub as cdkInsightsId (for login lookup)
+					name: customerName || "",
+					signUpDate: new Date().toISOString(),
+					stripeCustomerId: stripeCustomerId,
+					stripeSubscriptionId: "", // Will be set later when subscription is created
+					organization: "",
 					createdAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString(),
 				},
 			);
 
