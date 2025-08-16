@@ -33,6 +33,8 @@ export const customerCreated =
 			trialEnd,
 		} = detail;
 
+		console.log(items, 'items')
+
 		if (!customerEmail) {
 			logger.error("No valid email found in event data", {
 				customerId: stripeCustomerId,
