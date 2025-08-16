@@ -21,9 +21,6 @@ import { TSLambdaFunction } from "the-ldk";
 import { EventBus, Rule } from "aws-cdk-lib/aws-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 import { StringParameter } from "aws-cdk-lib/aws-ssm";
-import { EmailIdentity, Identity } from "aws-cdk-lib/aws-ses";
-import { HostedZone } from "aws-cdk-lib/aws-route53";
-import { userInvitationHtml } from "../../src/email/html/userInvitation/userInvitation";
 
 export class ServiceCognitoStack extends Stack {
 	public readonly userPoolClient: UserPoolClient;
@@ -268,7 +265,7 @@ export class ServiceCognitoStack extends Stack {
 				ruleName: `${serviceName}-customer-created-rule-${stage}`,
 				eventPattern: {
 					source: ["service.stripe"],
-					detailType: ["CustomerCreated"],
+					detailType: ["SubscriptionCreated"],
 				},
 			},
 		);

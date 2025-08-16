@@ -11,21 +11,23 @@ import type { EventBridgeEvent } from "aws-lambda";
 export type CustomerCreatedEvent = EventBridgeEvent<
 	"CustomerCreated",
 	{
-		stripeCustomerId: string;
-		customerEmail?: string; // Optional since it might not be present
-		customerName: string | null;
-		createdAt: number;
-		customerData: {
+		stripeSubscriptionId: string;
+		stripeCustomerId: string,
+		customerEmail: string,
+		customerName: string,
+		items: {
+			data: Array<{
 			id: string;
-			email: string;
-			name: string | null;
-		};
-		// Additional fields that might be present in the actual event
-		userName?: string;
-		email?: string;
-		name?: string;
-		// Allow for additional unknown fields
-		[key: string]: unknown;
+			price: { product: string; id: string };
+			quantity: number;
+			current_period_end: number;
+			}>;
+		};		
+  		status: string,
+		createdAt: string,
+		cancelAtPeriodEnd: string,
+		trialStart: number,
+		trialEnd: number
 	}
 >;
 

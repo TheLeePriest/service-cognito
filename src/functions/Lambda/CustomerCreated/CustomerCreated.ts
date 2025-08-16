@@ -19,26 +19,24 @@ export const customerCreated =
 	}: CustomerCreatedDependencies) =>
 	async (event: CustomerCreatedEvent) => {
 		const { detail } = event;
+		console.log("detail", detail);
 		const {
+			stripeSubscriptionId,
 			stripeCustomerId,
 			customerEmail,
 			customerName,
 			createdAt,
-			customerData,
+			items,
+			status,
+			cancelAtPeriodEnd,
+			trialStart,
+			trialEnd,
 		} = detail;
 
-		// Determine the email to use - check multiple possible locations
-		const email =
-			customerEmail || customerData?.email || detail.email || detail.userName;
-
-		// Validate that we have a valid email
-		if (!email) {
+		if (!customerEmail) {
 			logger.error("No valid email found in event data", {
 				customerId: stripeCustomerId,
 				customerEmail,
-				customerDataEmail: customerData?.email,
-				detailEmail: detail.email,
-				detailUserName: detail.userName,
 				detail,
 			});
 			throw new Error("No valid email found in event data");
@@ -46,8 +44,6 @@ export const customerCreated =
 
 		logger.info("Processing customer created for Cognito", {
 			customerId: stripeCustomerId,
-			customerEmail: email,
-			customerName,
 		});
 
 		try {
@@ -56,13 +52,12 @@ export const customerCreated =
 				await cognitoClient.send(
 					new AdminGetUserCommand({
 						UserPoolId: userPoolId,
-						Username: email,
+						Username: customerEmail,
 					}),
 				);
 
 				logger.warn("User already exists in Cognito", {
 					customerId: stripeCustomerId,
-					customerEmail: email,
 				});
 
 				// User already exists, no need to create
@@ -87,11 +82,11 @@ export const customerCreated =
 			const createUserResult = (await cognitoClient.send(
 				new AdminCreateUserCommand({
 					UserPoolId: userPoolId,
-					Username: email,
+					Username: customerEmail,
 					UserAttributes: [
 						{
 							Name: "email",
-							Value: email,
+							Value: customerEmail,
 						},
 						{
 							Name: "email_verified",
@@ -122,7 +117,7 @@ export const customerCreated =
 			await cognitoClient.send(
 				new AdminSetUserPasswordCommand({
 					UserPoolId: userPoolId,
-					Username: email,
+					Username: customerEmail,
 					Password: tempPassword,
 					Permanent: false, // User must change password on first login
 				}),
@@ -149,29 +144,45 @@ export const customerCreated =
 				"service.cognito",
 				"CognitoUserCreated",
 				{
-					userId: userAttributes.sub, // Use Cognito sub as userId
-					userName: email, // Use email as userName
-					cdkInsightsId: userAttributes.sub, // Use Cognito sub as cdkInsightsId (for login lookup)
-					name: customerName || "",
-					signUpDate: new Date().toISOString(),
+					userId: userAttributes.sub,
+					userName: customerEmail,
+					cdkInsightsId: userAttributes.sub,
+					name: customerName,
+					signUpDate: createdAt,
 					stripeCustomerId: stripeCustomerId,
-					stripeSubscriptionId: "", // Will be set later when subscription is created
+					stripeSubscriptionId,
 					organization: "",
-					createdAt: new Date().toISOString(),
-					updatedAt: new Date().toISOString(),
+					createdAt,
+					updatedAt: createdAt,
+				},
+			);
+
+			await eventBridge.putEvent(
+				eventBusName,
+				"service.cognito",
+				"CognitoUserSubscriptionCreated",
+				{
+					userId: userAttributes.sub,
+					stripeSubscriptionId,
+					stripeCustomerId,
+					customerEmail,
+					customerName,
+					createdAt,
+					items,
+					status,
+					cancelAtPeriodEnd,
+					trialStart,
+					trialEnd,
 				},
 			);
 
 			logger.info("Cognito user created successfully", {
 				cognitoUserId: createUserResult.User.Username,
-				cognitoSub: userAttributes.sub,
 				customerId: stripeCustomerId,
-				customerEmail: email,
 			});
 		} catch (error) {
 			logger.error("Error creating Cognito user", {
 				customerId: stripeCustomerId,
-				customerEmail: email,
 				error: error instanceof Error ? error.message : String(error),
 				stack: error instanceof Error ? error.stack : undefined,
 			});
