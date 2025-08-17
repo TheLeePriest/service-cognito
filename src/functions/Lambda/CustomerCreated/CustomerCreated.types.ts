@@ -24,7 +24,7 @@ export type CustomerCreatedEvent = EventBridgeEvent<
 			}>;
 		};		
   		status: string,
-		createdAt: string,
+		createdAt: string, // Unix timestamp in seconds from Stripe
 		cancelAtPeriodEnd: string,
 		trialStart: number,
 		trialEnd: number
