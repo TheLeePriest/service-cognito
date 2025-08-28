@@ -49,7 +49,6 @@ export const customerCreated =
 		});
 
 		try {
-			// Check if user already exists to prevent duplicate creation
 			try {
 				await cognitoClient.send(
 					new AdminGetUserCommand({
@@ -159,24 +158,24 @@ export const customerCreated =
 				},
 			);
 
-			await eventBridge.putEvent(
-				eventBusName,
-				"service.cognito",
-				"CognitoUserSubscriptionCreated",
-				{
-					userId: userAttributes.sub,
-					stripeSubscriptionId,
-					stripeCustomerId,
-					customerEmail,
-					customerName,
-					createdAt,
-					items,
-					status,
-					cancelAtPeriodEnd,
-					trialStart,
-					trialEnd,
-				},
-			);
+			// await eventBridge.putEvent(
+			// 	eventBusName,
+			// 	"service.cognito",
+			// 	"CognitoUserSubscriptionCreated",
+			// 	{
+			// 		userId: userAttributes.sub,
+			// 		stripeSubscriptionId,
+			// 		stripeCustomerId,
+			// 		customerEmail,
+			// 		customerName,
+			// 		createdAt,
+			// 		items,
+			// 		status,
+			// 		cancelAtPeriodEnd,
+			// 		trialStart,
+			// 		trialEnd,
+			// 	},
+			// );
 
 			logger.info("Cognito user created successfully", {
 				cognitoUserId: createUserResult.User.Username,
