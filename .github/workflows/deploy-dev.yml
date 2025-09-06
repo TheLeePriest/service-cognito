@@ -13,7 +13,7 @@ on:
 
 env:
   AWS_REGION: eu-west-2
-  STACK_NAME: service-ai-analysis
+  STACK_NAME: service-cognito
   STAGE: dev
   EVENT_BUS_NAME: service-eventbridge-event-bus
 
@@ -45,12 +45,14 @@ jobs:
 
       - name: Deploy Stack
         run: |
-          cdk deploy --require-approval never || {
-            echo '❌ Deployment failed. Checking rollback options...';
-            if [ "$AUTO_ROLLBACK" == "yes" ]; then
-              echo '🔄 Rolling back...';
-              aws cloudformation rollback-stack --stack-name ${STACK_NAME}
-            else
-              echo '🛑 Manual rollback required!';
-            fi
-          }
+          echo "🚀 Starting deployment to ${STAGE} environment..."
+          cdk deploy --require-approval never
+          if [ $? -ne 0 ]; then
+            echo "❌ Deployment failed with exit code $?"
+            echo "🔍 Checking CloudFormation stack status..."
+            aws cloudformation describe-stacks --stack-name ${STACK_NAME}-${STAGE} --query 'Stacks[0].StackStatus' --output text || echo "Stack not found or inaccessible"
+            echo "📋 Recent CloudFormation events:"
+            aws cloudformation describe-stack-events --stack-name ${STACK_NAME}-${STAGE} --query 'StackEvents[0:5].[Timestamp,LogicalResourceId,ResourceStatus,ResourceStatusReason]' --output table || echo "Could not retrieve events"
+            exit 1
+          fi
+          echo "✅ Deployment completed successfully"

@@ -1,7 +1,7 @@
 import {
 	AdminCreateUserCommand,
 	type AdminCreateUserCommandOutput,
-	AdminGetUserCommand,
+	ListUsersCommand,
 	AdminSetUserPasswordCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import type {
@@ -50,30 +50,33 @@ export const customerCreated =
 
 		try {
 			try {
-				await cognitoClient.send(
-					new AdminGetUserCommand({
+				// Use ListUsers instead of AdminGetUser to avoid marking user as active
+				const listUsersResult = await cognitoClient.send(
+					new ListUsersCommand({
 						UserPoolId: userPoolId,
-						Username: customerEmail,
+						Filter: `email = "${customerEmail}"`,
+						Limit: 1,
 					}),
 				);
 
-				logger.warn("User already exists in Cognito", {
-					customerId: stripeCustomerId,
-				});
+				if (listUsersResult.Users && listUsersResult.Users.length > 0) {
+					logger.warn("User already exists in Cognito", {
+						customerId: stripeCustomerId,
+						email: customerEmail,
+					});
 
-				// User already exists, no need to create
-				return;
-			} catch (err: unknown) {
-				// Only proceed if the error is UserNotFoundException
-				if (
-					typeof err === "object" &&
-					err !== null &&
-					"name" in err &&
-					(err as { name?: string }).name !== "UserNotFoundException"
-				) {
-					throw err;
+					// User already exists, no need to create
+					return;
 				}
 				// User doesn't exist, proceed with creation
+			} catch (err: unknown) {
+				// Log the error but don't fail the entire operation
+				logger.warn("Error checking user existence in Cognito", {
+					customerId: stripeCustomerId,
+					error: err instanceof Error ? err.message : String(err),
+				});
+				
+				// Continue with user creation attempt
 			}
 
 			// Generate a temporary password with better entropy
@@ -157,25 +160,6 @@ export const customerCreated =
 					updatedAt: createdAt,
 				},
 			);
-
-			// await eventBridge.putEvent(
-			// 	eventBusName,
-			// 	"service.cognito",
-			// 	"CognitoUserSubscriptionCreated",
-			// 	{
-			// 		userId: userAttributes.sub,
-			// 		stripeSubscriptionId,
-			// 		stripeCustomerId,
-			// 		customerEmail,
-			// 		customerName,
-			// 		createdAt,
-			// 		items,
-			// 		status,
-			// 		cancelAtPeriodEnd,
-			// 		trialStart,
-			// 		trialEnd,
-			// 	},
-			// );
 
 			logger.info("Cognito user created successfully", {
 				cognitoUserId: createUserResult.User.Username,
