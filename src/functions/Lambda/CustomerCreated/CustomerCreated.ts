@@ -10,7 +10,8 @@ import type {
 } from "./CustomerCreated.types";
 
 // Simple in-memory cache to avoid repeated Cognito lookups
-// SECURITY: Cache key includes userPoolId to prevent cross-user data leakage
+// SECURITY: Cache key uses stripeCustomerId for proper user isolation
+// Note: userPoolId is the same for all users, so it doesn't provide isolation
 const userExistenceCache = new Map<string, { exists: boolean; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -18,9 +19,11 @@ const checkUserExists = async (
 	cognitoClient: CustomerCreatedDependencies['cognitoClient'],
 	userPoolId: string,
 	email: string,
+	stripeCustomerId: string, // Make this required for proper isolation
 ): Promise<boolean> => {
-	// Create unique cache key with userPoolId to prevent cross-user data leakage
-	const cacheKey = `${userPoolId}:${email}`;
+	// Create unique cache key using ONLY customer context
+	// userPoolId is the same for all users, so it doesn't provide isolation
+	const cacheKey = `${stripeCustomerId}:${email}`;
 	
 	// Check cache first
 	const cached = userExistenceCache.get(cacheKey);
@@ -40,7 +43,7 @@ const checkUserExists = async (
 
 		const exists = listUsersResult.Users && listUsersResult.Users.length > 0;
 		
-		// Cache the result with userPoolId-scoped key
+		// Cache the result with customer-scoped key only
 		userExistenceCache.set(cacheKey, {
 			exists,
 			timestamp: Date.now(),
@@ -93,8 +96,8 @@ export const customerCreated =
 		});
 
 		try {
-			// Use cached user existence check
-			const userExists = await checkUserExists(cognitoClient, userPoolId, customerEmail);
+			// Use cached user existence check with customer context
+			const userExists = await checkUserExists(cognitoClient, userPoolId, customerEmail, stripeCustomerId);
 			
 			if (userExists) {
 				logger.warn("User already exists in Cognito", {
