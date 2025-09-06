@@ -9,6 +9,46 @@ import type {
 	CustomerCreatedEvent,
 } from "./CustomerCreated.types";
 
+// Simple in-memory cache to avoid repeated Cognito lookups
+const userExistenceCache = new Map<string, { exists: boolean; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+const checkUserExists = async (
+	cognitoClient: CustomerCreatedDependencies['cognitoClient'],
+	userPoolId: string,
+	email: string,
+): Promise<boolean> => {
+	// Check cache first
+	const cached = userExistenceCache.get(email);
+	if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+		return cached.exists;
+	}
+
+	try {
+		// Use ListUsers instead of AdminGetUser to avoid marking user as active
+		const listUsersResult = await cognitoClient.send(
+			new ListUsersCommand({
+				UserPoolId: userPoolId,
+				Filter: `email = "${email}"`,
+				Limit: 1,
+			}),
+		);
+
+		const exists = listUsersResult.Users && listUsersResult.Users.length > 0;
+		
+		// Cache the result
+		userExistenceCache.set(email, {
+			exists,
+			timestamp: Date.now(),
+		});
+
+		return exists;
+	} catch (error) {
+		// If Cognito call fails, don't cache and return false to proceed with creation
+		return false;
+	}
+};
+
 export const customerCreated =
 	({
 		userPoolId,
@@ -49,40 +89,34 @@ export const customerCreated =
 		});
 
 		try {
-			try {
-				// Use ListUsers instead of AdminGetUser to avoid marking user as active
-				const listUsersResult = await cognitoClient.send(
-					new ListUsersCommand({
-						UserPoolId: userPoolId,
-						Filter: `email = "${customerEmail}"`,
-						Limit: 1,
-					}),
-				);
-
-				if (listUsersResult.Users && listUsersResult.Users.length > 0) {
-					logger.warn("User already exists in Cognito", {
-						customerId: stripeCustomerId,
-						email: customerEmail,
-					});
-
-					// User already exists, no need to create
-					return;
-				}
-				// User doesn't exist, proceed with creation
-			} catch (err: unknown) {
-				// Log the error but don't fail the entire operation
-				logger.warn("Error checking user existence in Cognito", {
+			// Use cached user existence check
+			const userExists = await checkUserExists(cognitoClient, userPoolId, customerEmail);
+			
+			if (userExists) {
+				logger.warn("User already exists in Cognito", {
 					customerId: stripeCustomerId,
-					error: err instanceof Error ? err.message : String(err),
+					email: customerEmail,
 				});
-				
-				// Continue with user creation attempt
+
+				// User already exists, no need to create
+				return;
 			}
+			// User doesn't exist, proceed with creation
+		} catch (err: unknown) {
+			// Log the error but don't fail the entire operation
+			logger.warn("Error checking user existence in Cognito", {
+				customerId: stripeCustomerId,
+				error: err instanceof Error ? err.message : String(err),
+			});
+			
+			// Continue with user creation attempt
+		}
 
-			// Generate a temporary password with better entropy
-			const tempPassword = `${Math.random().toString(36).slice(-8)}A1!`;
+		// Generate a temporary password with better entropy
+		const tempPassword = `${Math.random().toString(36).slice(-8)}A1!`;
 
-			// Create user in Cognito
+		// Create user in Cognito
+		try {
 			const createUserResult = (await cognitoClient.send(
 				new AdminCreateUserCommand({
 					UserPoolId: userPoolId,
