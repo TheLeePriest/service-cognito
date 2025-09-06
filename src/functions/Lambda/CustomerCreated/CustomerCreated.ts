@@ -10,6 +10,7 @@ import type {
 } from "./CustomerCreated.types";
 
 // Simple in-memory cache to avoid repeated Cognito lookups
+// SECURITY: Cache key includes userPoolId to prevent cross-user data leakage
 const userExistenceCache = new Map<string, { exists: boolean; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -18,8 +19,11 @@ const checkUserExists = async (
 	userPoolId: string,
 	email: string,
 ): Promise<boolean> => {
+	// Create unique cache key with userPoolId to prevent cross-user data leakage
+	const cacheKey = `${userPoolId}:${email}`;
+	
 	// Check cache first
-	const cached = userExistenceCache.get(email);
+	const cached = userExistenceCache.get(cacheKey);
 	if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
 		return cached.exists;
 	}
@@ -36,8 +40,8 @@ const checkUserExists = async (
 
 		const exists = listUsersResult.Users && listUsersResult.Users.length > 0;
 		
-		// Cache the result
-		userExistenceCache.set(email, {
+		// Cache the result with userPoolId-scoped key
+		userExistenceCache.set(cacheKey, {
 			exists,
 			timestamp: Date.now(),
 		});
