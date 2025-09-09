@@ -192,7 +192,7 @@ export const customerCreated =
 					userId: userAttributes.sub,
 					userName: customerEmail,
 					cdkInsightsId: userAttributes.sub,
-					name: customerName,
+					customerName,
 					signUpDate: createdAt,
 					stripeCustomerId: stripeCustomerId,
 					stripeSubscriptionId,
