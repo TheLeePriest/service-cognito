@@ -3,7 +3,7 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to CDK-Insights</title>
+  <title>Welcome to CDK Insights</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
             <td align="center" style="padding:30px 20px; background-color:#000d0a;">
               <img
                 src="https://cdk-insights.s3.eu-west-2.amazonaws.com/cdk-insights-cube.png"
-                alt="CDK-Insights Logo"
+                alt="CDK Insights Logo"
                 width="100"
                 style="
                   display:block;
@@ -37,7 +37,7 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
                 "
               />
               <h1 style="margin:0; font-size:36px; font-weight:bold;">
-                Welcome to CDK-Insights!
+                Welcome to CDK Insights!
               </h1>
             </td>
           </tr>
@@ -46,10 +46,12 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
           <tr>
             <td style="background-color:#000d0a; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
-                Hi there ${displayName} {username} 👋🏻,
+                Hi there ${displayName} 👋🏻,
               </h2>
+              <!-- Cognito requires {username} placeholder to be present for {####} to work -->
+              <span style="display:none;">{username}</span>
               <p style="text-align:center; margin:10px 0;">
-                We're thrilled to welcome you to CDK-Insights! Your account has been created,
+                We're thrilled to welcome you to CDK Insights! Your account has been created,
                 and you're just a few steps away from enhancing your AWS CDK development
                 experience.
               </p>
@@ -88,7 +90,7 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
           <tr>
             <td style="background-color:#000d0a; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
-                With CDK-Insights, you'll be able to:
+                With CDK Insights, you'll be able to:
               </h2>
               <table
                 width="100%"
@@ -130,7 +132,7 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
                 <li>Click the button below to go to the login page</li>
                 <li>Enter your email address and the temporary password provided above</li>
                 <li>You will be prompted to set a new password</li>
-                <li>Once your new password is set, you'll have full access to CDK-Insights</li>
+                <li>Once your new password is set, you'll have full access to CDK Insights</li>
               </ol>
               <div style="text-align:center; margin:20px 0;">
                 <a
@@ -145,7 +147,7 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
                     margin-top:20px;
                   "
                 >
-                  Log In to CDK-Insights
+                  Log In to CDK Insights
                 </a>
               </div>
               <p style="text-align:center; margin:10px 0;">
@@ -153,7 +155,7 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
                 our support team at support@cdk-insights.com.
               </p>
               <p style="text-align:center; margin:10px 0;">
-                Best regards,<br />The CDK-Insights Team
+                Best regards,<br />The CDK Insights Team
               </p>
             </td>
           </tr>
@@ -161,7 +163,7 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
           <tr>
             <td style="background-color:#000d0a; padding:20px; text-align:center;">
               <div style="font-size:12px; color:#fcf9f4;">
-                &copy; 2025 CDK-Insights. All rights reserved.
+                &copy; 2025 CDK Insights. All rights reserved.
               </div>
             </td>
           </tr>
