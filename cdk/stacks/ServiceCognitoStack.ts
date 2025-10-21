@@ -21,6 +21,8 @@ import { TSLambdaFunction } from "the-ldk";
 import { EventBus, Rule } from "aws-cdk-lib/aws-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 import { StringParameter } from "aws-cdk-lib/aws-ssm";
+import { HostedZone } from "aws-cdk-lib/aws-route53";
+import { EmailIdentity, Identity } from "aws-cdk-lib/aws-ses";
 
 export class ServiceCognitoStack extends Stack {
 	public readonly userPoolClient: UserPoolClient;
@@ -37,6 +39,38 @@ export class ServiceCognitoStack extends Stack {
 			`${serviceName}-event-bus-${stage}`,
 			eventBusName,
 		);
+
+		// Setup SES email identity for production
+		if (stage === "prod") {
+			// Look up the existing cdkinsights.dev hosted zone
+			const cdkInsightsHostedZone = HostedZone.fromLookup(
+				this,
+				"CdkInsightsHostedZone",
+				{
+					domainName: "cdkinsights.dev",
+				},
+			);
+
+			// Create SES email identity for the domain
+			const cdkInsightsEmailIdentity = new EmailIdentity(
+				this,
+				`${serviceName}-ses-identity-${stage}`,
+				{
+					identity: Identity.publicHostedZone(cdkInsightsHostedZone),
+				},
+			);
+
+			// Output the SES identity ARN
+			new CfnOutput(this, "SesIdentityArn", {
+				value: cdkInsightsEmailIdentity.emailIdentityArn,
+				description: "SES Email Identity ARN for cdkinsights.dev",
+				exportName: `${serviceName}-ses-identity-arn-${stage}`,
+			});
+
+			console.log(
+				"✅ SES email identity configured for cdkinsights.dev",
+			);
+		}
 
 		const userInvitationEmailLambdaPath = path.join(
 			__dirname,

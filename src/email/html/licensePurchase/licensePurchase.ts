@@ -3,7 +3,7 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>License Purchase Confirmation - CDK-Insights</title>
+  <title>License Purchase Confirmation - CDK Insights</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
             <td align="center" style="padding:30px 20px; background-color:#000d0a;">
               <img
                 src="https://cdk-insights.s3.eu-west-2.amazonaws.com/cdk-insights-cube.png"
-                alt="CDK-Insights Logo"
+                alt="CDK Insights Logo"
                 width="100"
                 style="
                   display:block;
@@ -49,7 +49,7 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
                 Hi there ${displayName} 👋🏻,
               </h2>
               <p style="text-align:center; margin:10px 0;">
-                Thank you for purchasing a CDK-Insights license! Your payment has been processed successfully,
+                Thank you for purchasing a CDK Insights license! Your payment has been processed successfully,
                 and your license is now active.
               </p>
             </td>
@@ -130,7 +130,7 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
                 Getting Started
               </h2>
               <ol style="padding-left:40px; margin:10px 0;">
-                <li>Log in to your CDK-Insights dashboard</li>
+                <li>Log in to your CDK Insights dashboard</li>
                 <li>Enter your license key when prompted</li>
                 <li>Start analyzing your CDK stacks</li>
                 <li>Explore the advanced features available with your license</li>
@@ -161,7 +161,7 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
                 Need Help?
               </h2>
               <p style="text-align:center; margin:10px 0;">
-                Our support team is here to help you get the most out of CDK-Insights.
+                Our support team is here to help you get the most out of CDK Insights.
                 Don't hesitate to reach out if you have any questions!
               </p>
               <p style="text-align:center; margin:10px 0;">
@@ -174,7 +174,7 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
           <tr>
             <td style="background-color:#000d0a; padding:20px; text-align:center;">
               <div style="font-size:12px; color:#fcf9f4;">
-                &copy; 2025 CDK-Insights. All rights reserved.
+                &copy; 2025 CDK Insights. All rights reserved.
               </div>
             </td>
           </tr>
