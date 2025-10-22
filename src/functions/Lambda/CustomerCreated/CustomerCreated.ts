@@ -2,6 +2,7 @@ import {
 	AdminCreateUserCommand,
 	type AdminCreateUserCommandOutput,
 	ListUsersCommand,
+	type ListUsersCommandOutput,
 	AdminSetUserPasswordCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import type {
@@ -39,9 +40,9 @@ const checkUserExists = async (
 				Filter: `email = "${email}"`,
 				Limit: 1,
 			}),
-		);
+		) as ListUsersCommandOutput;
 
-		const exists = listUsersResult.Users && listUsersResult.Users.length > 0;
+		const exists = !!(listUsersResult.Users && listUsersResult.Users.length > 0);
 		
 		// Cache the result with customer-scoped key only
 		userExistenceCache.set(cacheKey, {
@@ -132,10 +133,6 @@ export const customerCreated =
 						{
 							Name: "email",
 							Value: customerEmail,
-						},
-						{
-							Name: "email_verified",
-							Value: "true",
 						},
 						{
 							Name: "custom:stripeCustomerId",

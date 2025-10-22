@@ -5,6 +5,8 @@ import type {
 	AdminGetUserCommandOutput,
 	AdminSetUserPasswordCommand,
 	AdminSetUserPasswordCommandOutput,
+	ListUsersCommand,
+	ListUsersCommandOutput,
 } from "@aws-sdk/client-cognito-identity-provider";
 import type { EventBridgeEvent } from "aws-lambda";
 
@@ -38,11 +40,13 @@ export type CustomerCreatedDependencies = {
 			command:
 				| AdminGetUserCommand
 				| AdminCreateUserCommand
-				| AdminSetUserPasswordCommand,
+				| AdminSetUserPasswordCommand
+				| ListUsersCommand,
 		) => Promise<
 			| AdminGetUserCommandOutput
 			| AdminCreateUserCommandOutput
 			| AdminSetUserPasswordCommandOutput
+			| ListUsersCommandOutput
 		>;
 	};
 	eventBridge: {
