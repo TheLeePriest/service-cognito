@@ -41,8 +41,8 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		// Setup SES email identity for both dev and prod
-		// Look up the existing hosted zone based on stage
-		const domainName = stage === "prod" ? "cdkinsights.dev" : "dev.cdkinsights.dev";
+		// Use the same verified domain for both environments
+		const domainName = "cdkinsights.dev";
 		
 		const cdkInsightsHostedZone = HostedZone.fromLookup(
 			this,
@@ -117,9 +117,9 @@ export class ServiceCognitoStack extends Stack {
 			},
 			removalPolicy: RemovalPolicy.DESTROY,
 		email: UserPoolEmail.withSES({
-			fromEmail: stage === "prod" ? "support@cdkinsights.dev" : "support@dev.cdkinsights.dev",
+			fromEmail: "support@cdkinsights.dev",
 			fromName: "CDK Insights",
-			replyTo: stage === "prod" ? "support@cdkinsights.dev" : "support@dev.cdkinsights.dev",
+			replyTo: "support@cdkinsights.dev",
 			sesRegion: "eu-west-2",
 			sesVerifiedDomain: domainName,
 		}),
