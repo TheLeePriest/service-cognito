@@ -75,10 +75,6 @@ export const customerCreated =
 			customerName,
 			createdAt,
 			items,
-			status,
-			cancelAtPeriodEnd,
-			trialStart,
-			trialEnd,
 		} = detail;
 
 		console.log(items, 'items')
