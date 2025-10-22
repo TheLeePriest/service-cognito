@@ -40,37 +40,38 @@ export class ServiceCognitoStack extends Stack {
 			eventBusName,
 		);
 
-		// Setup SES email identity for both dev and prod
-		// Use the same verified domain for both environments
-		const domainName = "cdkinsights.dev";
-		
-		const cdkInsightsHostedZone = HostedZone.fromLookup(
-			this,
-			"CdkInsightsHostedZone",
-			{
-				domainName: domainName,
-			},
-		);
+		// Setup SES email identity only for production
+		if (stage === "prod") {
+			const domainName = "cdkinsights.dev";
+			
+			const cdkInsightsHostedZone = HostedZone.fromLookup(
+				this,
+				"CdkInsightsHostedZone",
+				{
+					domainName: domainName,
+				},
+			);
 
-		// Create SES email identity for the domain
-		const cdkInsightsEmailIdentity = new EmailIdentity(
-			this,
-			`${serviceName}-ses-identity-${stage}`,
-			{
-				identity: Identity.publicHostedZone(cdkInsightsHostedZone),
-			},
-		);
+			// Create SES email identity for the domain
+			const cdkInsightsEmailIdentity = new EmailIdentity(
+				this,
+				`${serviceName}-ses-identity-${stage}`,
+				{
+					identity: Identity.publicHostedZone(cdkInsightsHostedZone),
+				},
+			);
 
-		// Output the SES identity ARN
-		new CfnOutput(this, "SesIdentityArn", {
-			value: cdkInsightsEmailIdentity.emailIdentityArn,
-			description: `SES Email Identity ARN for ${domainName}`,
-			exportName: `${serviceName}-ses-identity-arn-${stage}`,
-		});
+			// Output the SES identity ARN
+			new CfnOutput(this, "SesIdentityArn", {
+				value: cdkInsightsEmailIdentity.emailIdentityArn,
+				description: `SES Email Identity ARN for ${domainName}`,
+				exportName: `${serviceName}-ses-identity-arn-${stage}`,
+			});
 
-		console.log(
-			`✅ SES email identity configured for ${domainName}`,
-		);
+			console.log(
+				`✅ SES email identity configured for ${domainName}`,
+			);
+		}
 
 		const userInvitationEmailLambdaPath = path.join(
 			__dirname,
@@ -116,13 +117,15 @@ export class ServiceCognitoStack extends Stack {
 				email: true,
 			},
 			removalPolicy: RemovalPolicy.DESTROY,
-		email: UserPoolEmail.withSES({
-			fromEmail: "support@cdkinsights.dev",
-			fromName: "CDK Insights",
-			replyTo: "support@cdkinsights.dev",
-			sesRegion: "eu-west-2",
-			sesVerifiedDomain: domainName,
-		}),
+		email: stage === "prod" 
+			? UserPoolEmail.withSES({
+				fromEmail: "support@cdkinsights.dev",
+				fromName: "CDK Insights",
+				replyTo: "support@cdkinsights.dev",
+				sesRegion: "eu-west-2",
+				sesVerifiedDomain: "cdkinsights.dev",
+			})
+			: UserPoolEmail.withCognito(),
 			customAttributes: {
 				subscriptionTier: new StringAttribute({
 					mutable: true,
