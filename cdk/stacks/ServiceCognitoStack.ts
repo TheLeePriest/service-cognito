@@ -43,7 +43,6 @@ export class ServiceCognitoStack extends Stack {
 		// Setup SES email identity for both dev and prod
 		// Look up the existing hosted zone based on stage
 		const domainName = stage === "prod" ? "cdkinsights.dev" : "dev.cdkinsights.dev";
-		const sesDomain = stage === "prod" ? "cdkinsights.awsapps.com" : domainName;
 		
 		const cdkInsightsHostedZone = HostedZone.fromLookup(
 			this,
@@ -65,12 +64,12 @@ export class ServiceCognitoStack extends Stack {
 		// Output the SES identity ARN
 		new CfnOutput(this, "SesIdentityArn", {
 			value: cdkInsightsEmailIdentity.emailIdentityArn,
-			description: `SES Email Identity ARN for ${sesDomain}`,
+			description: `SES Email Identity ARN for ${domainName}`,
 			exportName: `${serviceName}-ses-identity-arn-${stage}`,
 		});
 
 		console.log(
-			`✅ SES email identity configured for ${sesDomain}`,
+			`✅ SES email identity configured for ${domainName}`,
 		);
 
 		const userInvitationEmailLambdaPath = path.join(
@@ -118,11 +117,11 @@ export class ServiceCognitoStack extends Stack {
 			},
 			removalPolicy: RemovalPolicy.DESTROY,
 		email: UserPoolEmail.withSES({
-			fromEmail: stage === "prod" ? "support@cdkinsights.awsapps.com" : "support@dev.cdkinsights.dev",
+			fromEmail: stage === "prod" ? "support@cdkinsights.dev" : "support@dev.cdkinsights.dev",
 			fromName: "CDK Insights",
-			replyTo: stage === "prod" ? "support@cdkinsights.awsapps.com" : "support@dev.cdkinsights.dev",
-			sesRegion: "eu-west-1",
-			sesVerifiedDomain: stage === "prod" ? "cdkinsights.awsapps.com" : domainName,
+			replyTo: stage === "prod" ? "support@cdkinsights.dev" : "support@dev.cdkinsights.dev",
+			sesRegion: "eu-west-2",
+			sesVerifiedDomain: domainName,
 		}),
 			customAttributes: {
 				subscriptionTier: new StringAttribute({
