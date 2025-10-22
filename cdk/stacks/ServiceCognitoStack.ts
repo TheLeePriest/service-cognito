@@ -118,11 +118,11 @@ export class ServiceCognitoStack extends Stack {
 			removalPolicy: RemovalPolicy.DESTROY,
 		email: stage === "prod" 
 			? UserPoolEmail.withSES({
-				fromEmail: "support@cdkinsights.dev",
+				fromEmail: "support@cdkinsights.awsapps.com",
 				fromName: "CDK Insights",
-				replyTo: "support@cdkinsights.dev",
+				replyTo: "support@cdkinsights.awsapps.com",
 				sesRegion: "eu-west-1",
-				sesVerifiedDomain: "cdkinsights.dev",
+				sesVerifiedDomain: "cdkinsights.awsapps.com",
 			})
 			: UserPoolEmail.withCognito(),
 			customAttributes: {

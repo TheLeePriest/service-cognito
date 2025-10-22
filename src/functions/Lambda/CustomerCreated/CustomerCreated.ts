@@ -152,8 +152,6 @@ export const customerCreated =
 							: []),
 					],
 					TemporaryPassword: tempPassword,
-					MessageAction: "RESEND", // This is crucial - must be RESEND to send email
-					DesiredDeliveryMediums: ["EMAIL"], // Only send email, not SMS
 				}),
 			)) as AdminCreateUserCommandOutput;
 
