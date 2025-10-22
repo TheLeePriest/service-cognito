@@ -148,6 +148,8 @@ export const customerCreated =
 							: []),
 					],
 					TemporaryPassword: tempPassword,
+					MessageAction: "RESEND", // Force email sending
+					DesiredDeliveryMediums: ["EMAIL"], // Only send email
 				}),
 			)) as AdminCreateUserCommandOutput;
 
