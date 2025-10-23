@@ -177,7 +177,7 @@ export class ServiceCognitoStack extends Stack {
 					  Effect: "Allow",
 					  Principal: { Service: "cognito-idp.amazonaws.com" },
 					  Action: ["SES:SendEmail", "SES:SendRawEmail"],
-					  Resource: "*",
+					  Resource: `arn:aws:ses:${Aws.REGION}:${Aws.ACCOUNT_ID}:identity/${domainName}`,
 					  Condition: {
 						StringEquals: { "AWS:SourceAccount": Aws.ACCOUNT_ID },
 						StringLike: { "AWS:SourceArn": userPool.userPoolArn },
