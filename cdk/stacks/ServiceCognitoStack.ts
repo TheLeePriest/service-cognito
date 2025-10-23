@@ -107,6 +107,19 @@ export class ServiceCognitoStack extends Stack {
 			},
 		);
 
+		
+		
+		// Create User Pool with proper SES configuration
+		const userPoolEmail = stage === "prod" 
+			? UserPoolEmail.withSES({
+				fromEmail: "support@cdkinsights.dev",
+				fromName: "CDK Insights",
+				replyTo: "support@cdkinsights.dev",
+				sesRegion: "eu-west-2",
+				sesVerifiedDomain: "cdkinsights.dev",
+			})
+			: UserPoolEmail.withCognito();
+
 		const userPool = new UserPool(this, `${serviceName}user-pool-${stage}`, {
 			userPoolName: `${serviceName}-user-pool-${stage}`,
 			selfSignUpEnabled: true,
@@ -117,15 +130,7 @@ export class ServiceCognitoStack extends Stack {
 				email: true,
 			},
 			removalPolicy: RemovalPolicy.DESTROY,
-		email: stage === "prod" 
-			? UserPoolEmail.withSES({
-				fromEmail: "support@cdkinsights.dev",
-				fromName: "CDK Insights",
-				replyTo: "support@cdkinsights.dev",
-				sesRegion: "eu-west-2",
-				sesVerifiedDomain: "cdkinsights.dev",
-			})
-			: UserPoolEmail.withCognito(),
+			email: userPoolEmail,
 			customAttributes: {
 				subscriptionTier: new StringAttribute({
 					mutable: true,
@@ -151,8 +156,10 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		// Grant Cognito permission to send emails via SES
-		// The SES integration will handle permissions automatically
-		// when using UserPoolEmail.withSES()
+		// Ensure the SES email identity is created before the User Pool
+		if (stage === "prod") {
+			userPool.node.addDependency(cdkInsightsEmailIdentity);
+		}
 
 		new StringParameter(this, `${serviceName}-user-pool-id-param`, {
 			parameterName: `/${stage}/userPoolId`,
