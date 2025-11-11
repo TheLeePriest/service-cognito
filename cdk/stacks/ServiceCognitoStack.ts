@@ -1,5 +1,4 @@
 import { RemovalPolicy, Duration, Stack, CfnOutput } from "aws-cdk-lib";
-import { Aws } from "aws-cdk-lib";
 import type { Construct } from "constructs";
 import {
 	UserPool,
@@ -24,8 +23,6 @@ import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 import { StringParameter } from "aws-cdk-lib/aws-ssm";
 import { HostedZone } from "aws-cdk-lib/aws-route53";
 import { EmailIdentity, Identity } from "aws-cdk-lib/aws-ses";
-
-import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from "aws-cdk-lib/custom-resources";
 
 export class ServiceCognitoStack extends Stack {
 	public readonly userPoolClient: UserPoolClient;
@@ -158,47 +155,6 @@ export class ServiceCognitoStack extends Stack {
 				sourceArn: userPool.userPoolArn,
 			},
 		);
-
-		// --- Allow Cognito to send using this SES identity (resource-based policy) ---
-		if (stage === "prod") {
-		  const domainName = "cdkinsights.dev"; // must match the SES identity created above
-
-		  const allowCognitoPolicy = new AwsCustomResource(this, "AllowCognitoToSendEmail", {
-			onCreate: {
-			  service: "SES",
-			  action: "PutIdentityPolicy",
-			  parameters: {
-				Identity: domainName, // if you switch to a single email identity, put that address here instead
-				PolicyName: `AllowCognito-${stage}`,
-				Policy: JSON.stringify({
-				  Version: "2012-10-17",
-				  Statement: [
-					{
-					  Effect: "Allow",
-					  Principal: { Service: "cognito-idp.amazonaws.com" },
-					  Action: ["SES:SendEmail", "SES:SendRawEmail"],
-					  Resource: `arn:aws:ses:${Aws.REGION}:${Aws.ACCOUNT_ID}:identity/${domainName}`,
-					  Condition: {
-						StringEquals: { "AWS:SourceAccount": Aws.ACCOUNT_ID },
-						StringLike: { "AWS:SourceArn": userPool.userPoolArn },
-					  },
-					},
-				  ],
-				}),
-			  },
-			  physicalResourceId: PhysicalResourceId.of(`AllowCognitoToSendEmail-${stage}`),
-			},
-			policy: AwsCustomResourcePolicy.fromSdkCalls({
-			  resources: AwsCustomResourcePolicy.ANY_RESOURCE,
-			}),
-		  });
-
-		  // Ensure the policy is created after both the SES identity and the User Pool exist
-		  if (cdkInsightsEmailIdentity) {
-			allowCognitoPolicy.node.addDependency(cdkInsightsEmailIdentity);
-		  }
-		  allowCognitoPolicy.node.addDependency(userPool);
-		}
 
 		// Grant Cognito permission to send emails via SES
 		// Ensure the SES email identity is created before the User Pool
