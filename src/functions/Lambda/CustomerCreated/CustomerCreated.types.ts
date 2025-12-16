@@ -5,6 +5,8 @@ import type {
 	AdminGetUserCommandOutput,
 	AdminSetUserPasswordCommand,
 	AdminSetUserPasswordCommandOutput,
+	AdminUpdateUserAttributesCommand,
+	AdminUpdateUserAttributesCommandOutput,
 	ListUsersCommand,
 	ListUsersCommandOutput,
 } from "@aws-sdk/client-cognito-identity-provider";
@@ -41,11 +43,13 @@ export type CustomerCreatedDependencies = {
 				| AdminGetUserCommand
 				| AdminCreateUserCommand
 				| AdminSetUserPasswordCommand
+				| AdminUpdateUserAttributesCommand
 				| ListUsersCommand,
 		) => Promise<
 			| AdminGetUserCommandOutput
 			| AdminCreateUserCommandOutput
 			| AdminSetUserPasswordCommandOutput
+			| AdminUpdateUserAttributesCommandOutput
 			| ListUsersCommandOutput
 		>;
 	};

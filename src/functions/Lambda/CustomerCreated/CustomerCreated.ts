@@ -4,6 +4,7 @@ import {
 	ListUsersCommand,
 	type ListUsersCommandOutput,
 	AdminSetUserPasswordCommand,
+	AdminUpdateUserAttributesCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import type {
 	CustomerCreatedDependencies,
@@ -102,7 +103,34 @@ export const customerCreated =
 					email: customerEmail,
 				});
 
-				// User already exists, no need to create
+				// If we already have the user but no name was set, update it when available
+				if (customerName) {
+					try {
+						await cognitoClient.send(
+							new AdminUpdateUserAttributesCommand({
+								UserPoolId: userPoolId,
+								Username: customerEmail,
+								UserAttributes: [
+									{ Name: "name", Value: customerName },
+									{ Name: "given_name", Value: customerName },
+								],
+							}),
+						);
+						logger.info("Updated existing Cognito user with name", {
+							customerId: stripeCustomerId,
+							email: customerEmail,
+							customerName,
+						});
+					} catch (updateError) {
+						logger.warn("Failed to update existing Cognito user name", {
+							customerId: stripeCustomerId,
+							email: customerEmail,
+							error: updateError instanceof Error ? updateError.message : String(updateError),
+						});
+					}
+				}
+
+				// User already exists; nothing else to do
 				return;
 			}
 			// User doesn't exist, proceed with creation
