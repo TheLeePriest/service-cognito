@@ -176,7 +176,9 @@ export const customerCreated =
 							: []),
 					],
 					TemporaryPassword: tempPassword,
-					MessageAction: "RESEND", // Force email sending
+					// IMPORTANT:
+					// MessageAction: "RESEND" is only valid for resending to existing users.
+					// If used during creation, Cognito throws UserNotFoundException.
 					DesiredDeliveryMediums: ["EMAIL"], // Only send email
 				}),
 			)) as AdminCreateUserCommandOutput;

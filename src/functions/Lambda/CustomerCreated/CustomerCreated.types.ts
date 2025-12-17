@@ -16,22 +16,27 @@ export type CustomerCreatedEvent = EventBridgeEvent<
 	"CustomerCreated",
 	{
 		stripeSubscriptionId: string;
-		stripeCustomerId: string,
-		customerEmail: string,
-		customerName: string,
-		items: {
-			data: Array<{
-			id: string;
-			price: { product: string; id: string };
+		stripeCustomerId: string;
+		customerEmail: string;
+		customerName: string;
+		items: Array<{
+			itemId: string;
+			productId: string;
+			productName: string;
+			productMetadata: Record<string, unknown>;
+			priceId: string;
+			priceData: Record<string, unknown>;
 			quantity: number;
-			current_period_end: number;
-			}>;
-		};		
-  		status: string,
-		createdAt: string, // Unix timestamp in seconds from Stripe
-		cancelAtPeriodEnd: string,
-		trialStart: number,
-		trialEnd: number
+			expiresAt: number;
+			metadata?: Record<string, unknown>;
+			isTeamSubscription?: boolean;
+		}>;
+		status: string;
+		createdAt: number; // Unix timestamp in seconds from Stripe
+		cancelAtPeriodEnd: boolean;
+		trialStart?: number;
+		trialEnd?: number;
+		metadata?: Record<string, string>;
 	}
 >;
 
