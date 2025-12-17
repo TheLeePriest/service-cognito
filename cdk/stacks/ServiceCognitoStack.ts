@@ -23,6 +23,7 @@ import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 import { StringParameter } from "aws-cdk-lib/aws-ssm";
 import { HostedZone } from "aws-cdk-lib/aws-route53";
 import { EmailIdentity, Identity } from "aws-cdk-lib/aws-ses";
+import { Effect } from "aws-cdk-lib/aws-iam";
 
 export class ServiceCognitoStack extends Stack {
 	public readonly userPoolClient: UserPoolClient;
@@ -315,6 +316,81 @@ export class ServiceCognitoStack extends Stack {
 
 		customerCreatedRule.addTarget(
 			new LambdaFunction(customerCreatedLambda.tsLambdaFunction),
+		);
+
+		// ============================================================================
+		// Send Trial Will End Email (via SES)
+		// ============================================================================
+
+		const sendTrialWillEndEmailLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/Email/SendTrialWillEndEmail/SendTrialWillEndEmail.handler.ts",
+		);
+
+		const sendTrialWillEndEmailLogGroup = new LogGroup(
+			this,
+			`${serviceName}-send-trial-will-end-email-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-send-trial-will-end-email-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const sesFromEmail =
+			stage === "prod" ? "support@cdkinsights.dev" : "support@dev.cdkinsights.dev";
+		const sesReplyToEmail =
+			stage === "prod" ? "support@cdkinsights.dev" : "support@dev.cdkinsights.dev";
+
+		const sendTrialWillEndEmailLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-send-trial-will-end-email-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "sendTrialWillEndEmailHandler",
+				entryPath: sendTrialWillEndEmailLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-send-trial-will-end-email-${stage}`,
+				customOptions: {
+					logGroup: sendTrialWillEndEmailLogGroup,
+					timeout: Duration.seconds(30),
+					memorySize: 256,
+					environment: {
+						SES_FROM_EMAIL: sesFromEmail,
+						SES_REPLY_TO_EMAIL: sesReplyToEmail,
+					},
+				},
+			},
+		);
+
+		// Allow SES sending
+		sendTrialWillEndEmailLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				effect: Effect.ALLOW,
+				actions: ["ses:SendEmail", "ses:SendRawEmail"],
+				resources: stage === "prod" && cdkInsightsEmailIdentity
+					? [cdkInsightsEmailIdentity.emailIdentityArn]
+					: ["*"],
+			}),
+		);
+
+		const sendTrialWillEndEmailRule = new Rule(
+			this,
+			`${serviceName}-send-trial-will-end-email-rule-${stage}`,
+			{
+				eventBus,
+				ruleName: `${serviceName}-send-trial-will-end-email-rule-${stage}`,
+				eventPattern: {
+					source: ["service.license"],
+					detailType: ["SendTrialWillEndEmail"],
+				},
+			},
+		);
+
+		sendTrialWillEndEmailRule.addTarget(
+			new LambdaFunction(sendTrialWillEndEmailLambda.tsLambdaFunction),
 		);
 	}
 }

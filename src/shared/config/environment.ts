@@ -11,6 +11,8 @@ const EnvironmentSchema = z.object({
   // AWS Resources
   USER_POOL_ID: z.string().min(1).optional(),
   EVENT_BUS_NAME: z.string().min(1).optional(),
+  SES_FROM_EMAIL: z.string().email().optional(),
+  SES_REPLY_TO_EMAIL: z.string().email().optional(),
 
   // AWS Lambda specific
   AWS_REGION: z.string().optional(),
