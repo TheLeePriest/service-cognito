@@ -1,246 +1,122 @@
 import {
-  LogLevel,
-  createConsoleTransport,
-  createJsonFormatter,
-  createLogger,
+  createStrogger,
   getEnvironment,
+  createJsonFormatter,
+  createCloudWatchTransport,
 } from "strogger";
 import { env } from "../config/environment";
+
+export type LogLevel = "debug" | "info" | "warn" | "error";
 
 export interface LogContext {
   requestId?: string;
   userId?: string;
   functionName?: string;
-  stage?: string;
   [key: string]: unknown;
 }
 
-export interface Logger {
-  debug: (
-    message: string,
-    context?: LogContext,
-    metadata?: Record<string, unknown>,
-  ) => void;
-  info: (
-    message: string,
-    context?: LogContext,
-    metadata?: Record<string, unknown>,
-  ) => void;
-  warn: (
-    message: string,
-    context?: LogContext,
-    error?: Error,
-    metadata?: Record<string, unknown>,
-  ) => void;
-  error: (
-    message: string,
-    context?: LogContext,
-    error?: Error,
-    metadata?: Record<string, unknown>,
-  ) => void;
-  fatal: (
-    message: string,
-    context?: LogContext,
-    error?: Error,
-    metadata?: Record<string, unknown>,
-  ) => void;
-  logFunctionStart: (
-    functionName: string,
-    context?: LogContext,
-    metadata?: Record<string, unknown>,
-  ) => void;
-  logFunctionEnd: (
-    functionName: string,
-    duration: number,
-    context?: LogContext,
-    metadata?: Record<string, unknown>,
-  ) => void;
-  logDatabaseOperation: (
-    operation: string,
-    table: string,
-    context?: LogContext,
-    metadata?: Record<string, unknown>,
-  ) => void;
-  logApiRequest: (
-    method: string,
-    path: string,
-    statusCode: number,
-    context?: LogContext,
-    metadata?: Record<string, unknown>,
-  ) => void;
+export interface LogEntry {
+  timestamp: string;
+  level: LogLevel;
+  message: string;
+  context?: LogContext;
+  error?: Error;
 }
 
-const getLogLevelFromEnv = (): LogLevel => {
-  const level = env.get("LOG_LEVEL")?.toUpperCase();
-  switch (level) {
-    case "DEBUG":
-      return LogLevel.DEBUG;
-    case "INFO":
-      return LogLevel.INFO;
-    case "WARN":
-      return LogLevel.WARN;
-    case "ERROR":
-      return LogLevel.ERROR;
-    case "FATAL":
-      return LogLevel.FATAL;
-    default:
-      return env.isProduction ? LogLevel.INFO : LogLevel.DEBUG;
-  }
-};
+// Logger factory
+export const createLogger = (functionName?: string) => {
+  // Get log level from environment
+  const getLogLevel = (): LogLevel => {
+    const level = env.get("LOG_LEVEL")?.toLowerCase();
+    switch (level) {
+      case "debug":
+        return "debug";
+      case "info":
+        return "info";
+      case "warn":
+        return "warn";
+      case "error":
+        return "error";
+      default:
+        return env.isProduction ? "info" : "debug";
+    }
+  };
 
-const createStroggerLogger = (): Logger => {
+  // Create strogger logger instance
   const stroggerEnv = getEnvironment();
-  const formatter = createJsonFormatter();
-  const transport = createConsoleTransport({
-    formatter,
-    level: getLogLevelFromEnv(),
-    useColors: !env.isProduction,
-  });
-
-  const stroggerLogger = createLogger({
-    config: {
-      level: getLogLevelFromEnv(),
-      serviceName: "service-cognito",
-      stage: env.stage,
-    },
-    transports: [transport],
-    formatter,
+  
+  const stroggerLogger = createStrogger({
     env: stroggerEnv,
+    config: {
+      instanceId: functionName || "service-cognito",
+    },
+    formatter: createJsonFormatter(),
   });
 
-  const enrichContext = (
+  // Create wrapper that maintains the same interface
+  const log = (
+    level: LogLevel,
+    message: string,
     context?: LogContext,
-    metadata?: Record<string, unknown>,
-  ) => ({
-    ...context,
-    stage: env.stage,
-    ...metadata,
-  });
+    error?: Error,
+  ): void => {
+    const metadata = {
+      ...context,
+      functionName:
+        functionName ||
+        context?.functionName ||
+        process.env.AWS_LAMBDA_FUNCTION_NAME,
+      stage: env.stage,
+      ...(error && {
+        error: {
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
+        },
+      }),
+    };
+
+    switch (level) {
+      case "debug":
+        stroggerLogger.debug(message, metadata);
+        break;
+      case "info":
+        stroggerLogger.info(message, metadata);
+        break;
+      case "warn":
+        stroggerLogger.warn(message, metadata);
+        break;
+      case "error":
+        stroggerLogger.error(message, metadata);
+        break;
+    }
+  };
 
   return {
-    debug: (
-      message: string,
-      context?: LogContext,
-      metadata?: Record<string, unknown>,
-    ) => {
-      stroggerLogger.debug(message, enrichContext(context, metadata));
-    },
+    debug: (message: string, context?: LogContext) =>
+      log("debug", message, context),
+    info: (message: string, context?: LogContext) =>
+      log("info", message, context),
+    warn: (message: string, context?: LogContext, error?: Error) =>
+      log("warn", message, context, error),
+    error: (message: string, context?: LogContext, error?: Error) =>
+      log("error", message, context, error),
 
-    info: (
-      message: string,
-      context?: LogContext,
-      metadata?: Record<string, unknown>,
-    ) => {
-      stroggerLogger.info(message, enrichContext(context, metadata));
+    // Convenience methods for common patterns
+    start: (operation: string, context?: LogContext) => {
+      log("info", `Starting: ${operation}`, context);
     },
-
-    warn: (
-      message: string,
-      context?: LogContext,
-      error?: Error,
-      metadata?: Record<string, unknown>,
-    ) => {
-      const enrichedContext = enrichContext(context, metadata);
-      if (error) {
-        stroggerLogger.warn(
-          message,
-          { ...enrichedContext, error: error.message },
-          error,
-        );
-      } else {
-        stroggerLogger.warn(message, enrichedContext);
-      }
+    success: (operation: string, context?: LogContext) => {
+      log("info", `Completed: ${operation}`, context);
     },
-
-    error: (
-      message: string,
-      context?: LogContext,
-      error?: Error,
-      metadata?: Record<string, unknown>,
-    ) => {
-      const enrichedContext = enrichContext(context, metadata);
-      if (error) {
-        stroggerLogger.error(
-          message,
-          { ...enrichedContext, error: error.message },
-          error,
-        );
-      } else {
-        stroggerLogger.error(message, enrichedContext);
-      }
-    },
-
-    fatal: (
-      message: string,
-      context?: LogContext,
-      error?: Error,
-      metadata?: Record<string, unknown>,
-    ) => {
-      const enrichedContext = enrichContext(context, metadata);
-      if (error) {
-        stroggerLogger.fatal(
-          message,
-          { ...enrichedContext, error: error.message },
-          error,
-        );
-      } else {
-        stroggerLogger.fatal(message, enrichedContext);
-      }
-    },
-
-    logFunctionStart: (
-      functionName: string,
-      context?: LogContext,
-      metadata?: Record<string, unknown>,
-    ) => {
-      stroggerLogger.logFunctionStart(
-        functionName,
-        enrichContext({ ...context, functionName }, metadata),
-      );
-    },
-
-    logFunctionEnd: (
-      functionName: string,
-      duration: number,
-      context?: LogContext,
-      metadata?: Record<string, unknown>,
-    ) => {
-      stroggerLogger.logFunctionEnd(
-        functionName,
-        duration,
-        enrichContext({ ...context, functionName, duration }, metadata),
-      );
-    },
-
-    logDatabaseOperation: (
-      operation: string,
-      table: string,
-      context?: LogContext,
-      metadata?: Record<string, unknown>,
-    ) => {
-      stroggerLogger.logDatabaseOperation(
-        operation,
-        table,
-        enrichContext({ ...context, operation, table }, metadata),
-      );
-    },
-
-    logApiRequest: (
-      method: string,
-      path: string,
-      statusCode: number,
-      context?: LogContext,
-      metadata?: Record<string, unknown>,
-    ) => {
-      stroggerLogger.logApiRequest(
-        method,
-        path,
-        statusCode,
-        enrichContext({ ...context, method, path, statusCode }, metadata),
-      );
+    failure: (operation: string, error: Error, context?: LogContext) => {
+      log("error", `Failed: ${operation}`, context, error);
     },
   };
 };
 
-// Export singleton instance
-export const logger = createStroggerLogger(); 
+export const getLogger = (
+  functionName?: string,
+): ReturnType<typeof createLogger> => {
+  return createLogger(functionName);
+}; 

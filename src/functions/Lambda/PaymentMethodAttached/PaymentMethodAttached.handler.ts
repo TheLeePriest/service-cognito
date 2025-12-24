@@ -2,7 +2,7 @@ import { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
 import { paymentMethodAttached } from "./PaymentMethodAttached";
 import { env } from "../../../shared/config/environment";
-import { logger } from "../../../shared/logging/logger";
+import { getLogger } from "../../../shared/logging/logger";
 
 const userPoolId = env.getRequired("USER_POOL_ID", "PaymentMethodAttached handler");
 const eventBusName = env.getRequired("EVENT_BUS_NAME", "PaymentMethodAttached handler");
@@ -38,5 +38,5 @@ export const paymentMethodAttachedHandler = paymentMethodAttached({
   cognitoClient,
   eventBridge,
   eventBusName,
-  logger,
+  logger: getLogger("PaymentMethodAttached"),
 }); 

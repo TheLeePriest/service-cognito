@@ -2,7 +2,7 @@ import { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
 import { customerCreated } from "./CustomerCreated";
 import { env } from "../../../shared/config/environment";
-import { logger } from "../../../shared/logging/logger";
+import { getLogger } from "../../../shared/logging/logger";
 
 const userPoolId = env.getRequired("USER_POOL_ID", "CustomerCreated handler");
 const eventBusName = env.getRequired("EVENT_BUS_NAME", "CustomerCreated handler");
@@ -38,7 +38,7 @@ export const customerCreatedHandler = customerCreated({
   cognitoClient,
   eventBridge,
   eventBusName,
-  logger,
+  logger: getLogger("CustomerCreated"),
 });
 
 // Export as default handler for Lambda runtime

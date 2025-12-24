@@ -1,16 +1,18 @@
 import type { CustomMessageTriggerEvent } from "aws-lambda";
-import { logger } from "../../../../shared/logging/logger";
+import { getLogger } from "../../../../shared/logging/logger";
 import { userInvitationHtml } from "../../../../email/html/userInvitation/userInvitation";
+
+const logger = getLogger("UserInvitation");
 
 export const userInvitation = async (event: CustomMessageTriggerEvent) => {
   const requestId = `user-invitation-${Date.now()}`;
-  const context = { requestId, functionName: "userInvitation" };
+  const context = { requestId };
   
-  logger.logFunctionStart("userInvitation", context);
-  logger.info("Processing user invitation event", context, { triggerSource: event.triggerSource });
+  logger.start("Processing user invitation event", context);
+  logger.info("Processing user invitation event", { ...context, triggerSource: event.triggerSource });
 
   const trigger = event.triggerSource;
-  logger.info("Trigger source", context, { trigger });
+  logger.info("Trigger source", { ...context, trigger });
 
   // Handle different trigger sources
   if (trigger === "CustomMessage_AdminCreateUser") {
@@ -20,13 +22,13 @@ export const userInvitation = async (event: CustomMessageTriggerEvent) => {
                        event.request.userAttributes?.email?.split('@')[0] || 
                        "User";
     
-    logger.info("Customizing admin create user email", context, { displayName });
+    logger.info("Customizing admin create user email", { ...context, displayName });
     
     // Set custom email subject and message
     event.response.emailSubject = "Welcome to CDK-Insights - Your Account is Ready!";
     event.response.emailMessage = userInvitationHtml(displayName);
   }
 
-  logger.logFunctionEnd("userInvitation", Date.now(), context);
+  logger.success("User invitation processed", context);
   return event;
 };

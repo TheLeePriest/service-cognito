@@ -1,6 +1,6 @@
 import { SESClient } from "@aws-sdk/client-ses";
 import { env } from "../../../../shared/config/environment";
-import { logger } from "../../../../shared/logging/logger";
+import { getLogger } from "../../../../shared/logging/logger";
 import { sendTrialWillEndEmail } from "./SendTrialWillEndEmail";
 
 const sesClient = new SESClient({});
@@ -10,7 +10,7 @@ const replyToEmail = env.get("SES_REPLY_TO_EMAIL") || undefined;
 
 export const sendTrialWillEndEmailHandler = sendTrialWillEndEmail({
   sesClient,
-  logger,
+  logger: getLogger("SendTrialWillEndEmail"),
   config: {
     fromEmail,
     replyToEmail,

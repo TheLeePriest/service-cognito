@@ -8,9 +8,9 @@ import type {
 import { SendTrialWillEndEmailDetailSchema } from "./SendTrialWillEndEmail.types";
 
 export const sendTrialWillEndEmail =
-	(deps: SendTrialWillEndEmailDependencies) =>
+	(dependencies: SendTrialWillEndEmailDependencies) =>
 	async (event: SendTrialWillEndEmailEvent): Promise<void> => {
-		const { sesClient, logger, config } = deps;
+		const { sesClient, logger, config } = dependencies;
 		const context = {
 			requestId: event.id,
 			functionName: "sendTrialWillEndEmail",
