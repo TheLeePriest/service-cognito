@@ -319,6 +319,79 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		// ============================================================================
+		// Team Member Activated Lambda (for team invitations)
+		// ============================================================================
+
+		const teamMemberActivatedLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/TeamMemberActivated/TeamMemberActivated.handler.ts",
+		);
+
+		const teamMemberActivatedLogGroup = new LogGroup(
+			this,
+			`${serviceName}-team-member-activated-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-team-member-activated-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const teamMemberActivatedLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-team-member-activated-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "handler",
+				entryPath: teamMemberActivatedLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-team-member-activated-${stage}`,
+				customOptions: {
+					logGroup: teamMemberActivatedLogGroup,
+					timeout: Duration.seconds(30),
+					memorySize: 256,
+					environment: {
+						EVENT_BUS_NAME: eventBus.eventBusName,
+						USER_POOL_ID: userPool.userPoolId,
+					},
+				},
+			},
+		);
+
+		eventBus.grantPutEventsTo(teamMemberActivatedLambda.tsLambdaFunction);
+
+		teamMemberActivatedLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				actions: [
+					"cognito-idp:AdminCreateUser",
+					"cognito-idp:AdminSetUserPassword",
+					"cognito-idp:ListUsers",
+				],
+				resources: [userPool.userPoolArn],
+			}),
+		);
+
+		// Listen for TeamMemberActivated events from service-user
+		const teamMemberActivatedRule = new Rule(
+			this,
+			`${serviceName}-team-member-activated-rule-${stage}`,
+			{
+				eventBus,
+				ruleName: `${serviceName}-team-member-activated-rule-${stage}`,
+				eventPattern: {
+					source: ["service.user"],
+					detailType: ["TeamMemberActivated"],
+				},
+			},
+		);
+
+		teamMemberActivatedRule.addTarget(
+			new LambdaFunction(teamMemberActivatedLambda.tsLambdaFunction),
+		);
+
+		// ============================================================================
 		// Send Trial Will End Email (via SES)
 		// ============================================================================
 
