@@ -6,6 +6,10 @@ import type {
 	SendTrialWillEndEmailEvent,
 } from "./SendTrialWillEndEmail.types";
 import { SendTrialWillEndEmailDetailSchema } from "./SendTrialWillEndEmail.types";
+import {
+	sanitizeUrl,
+	CDK_INSIGHTS_ALLOWED_DOMAINS,
+} from "../../../../shared/utils/htmlSanitizer";
 
 export const sendTrialWillEndEmail =
 	(dependencies: SendTrialWillEndEmailDependencies) =>
@@ -32,6 +36,9 @@ export const sendTrialWillEndEmail =
 			detail.customerEmail.split("@")[0] ||
 			"there";
 
+		// SECURITY: Validate upgrade URL against allowed domains
+		const safeUpgradeUrl = sanitizeUrl(detail.upgradeUrl, CDK_INSIGHTS_ALLOWED_DOMAINS);
+
 		const subject = "Your CDK Insights trial ends soon";
 		const htmlBody = trialWillEndHtml(
 			displayName,
@@ -42,7 +49,7 @@ export const sendTrialWillEndEmail =
 
 Just a reminder that your CDK Insights trial ends on ${new Date(detail.trialEnd * 1000).toDateString()}.
 
-Upgrade here: ${detail.upgradeUrl}
+Upgrade here: ${safeUpgradeUrl}
 `;
 
 		logger.info("Sending trial will end email", {

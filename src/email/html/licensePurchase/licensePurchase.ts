@@ -1,4 +1,12 @@
-export const licensePurchaseHtml = (displayName: string, licenseType: string, licenseKey: string) => `<!DOCTYPE html>
+import { escapeHtml } from "../../../shared/utils/htmlSanitizer";
+
+export const licensePurchaseHtml = (displayName: string, licenseType: string, licenseKey: string) => {
+  // SECURITY: Escape HTML to prevent XSS attacks via user input
+  const safeDisplayName = escapeHtml(displayName);
+  const safeLicenseType = escapeHtml(licenseType);
+  const safeLicenseKey = escapeHtml(licenseKey);
+
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -46,7 +54,7 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
           <tr>
             <td style="background-color:#000d0a; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
-                Hi there ${displayName} 👋🏻,
+                Hi there ${safeDisplayName} 👋🏻,
               </h2>
               <p style="text-align:center; margin:10px 0;">
                 Thank you for purchasing a CDK Insights license! Your payment has been processed successfully,
@@ -65,14 +73,14 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
                 <table width="100%" cellpadding="0" cellspacing="0" border="0">
                   <tr>
                     <td style="padding:10px 0;">
-                      <strong>License Type:</strong> ${licenseType}
+                      <strong>License Type:</strong> ${safeLicenseType}
                     </td>
                   </tr>
                   <tr>
                     <td style="padding:10px 0;">
-                      <strong>License Key:</strong> 
+                      <strong>License Key:</strong>
                       <span style="font-family: monospace; background-color:#000d0a; padding:5px 10px; border-radius:6px;">
-                        ${licenseKey}
+                        ${safeLicenseKey}
                       </span>
                     </td>
                   </tr>
@@ -90,7 +98,7 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
           <tr>
             <td style="background-color:#000d0a; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
-                What's Included in Your ${licenseType} License:
+                What's Included in Your ${safeLicenseType} License:
               </h2>
               <table
                 width="100%"
@@ -183,4 +191,5 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
     </tr>
   </table>
 </body>
-</html>`; 
+</html>`;
+};

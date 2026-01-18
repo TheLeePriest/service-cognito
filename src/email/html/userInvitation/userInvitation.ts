@@ -1,4 +1,10 @@
-export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
+import { escapeHtml } from "../../../shared/utils/htmlSanitizer";
+
+export const userInvitationHtml = (displayName: string) => {
+  // SECURITY: Escape HTML to prevent XSS attacks via user input
+  const safeDisplayName = escapeHtml(displayName);
+
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -46,7 +52,7 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
           <tr>
             <td style="background-color:#000d0a; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
-                Hi there ${displayName} 👋🏻,
+                Hi there ${safeDisplayName} 👋🏻,
               </h2>
               <!-- Cognito requires {username} placeholder to be present for {####} to work -->
               <span style="display:none;">{username}</span>
@@ -173,3 +179,4 @@ export const userInvitationHtml = (displayName: string) => `<!DOCTYPE html>
   </table>
 </body>
 </html>`;
+};

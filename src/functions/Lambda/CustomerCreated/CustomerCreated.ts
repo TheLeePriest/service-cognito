@@ -18,16 +18,40 @@ import { generateTempPassword } from "../../../shared/utils/generateTempPassword
 const userExistenceCache = new Map<string, { exists: boolean; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+/**
+ * Escapes special characters in a string for use in Cognito filter expressions.
+ * Cognito filter syntax requires escaping backslashes and double quotes.
+ */
+const escapeFilterValue = (value: string): string => {
+	// First escape backslashes, then escape double quotes
+	return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+};
+
+/**
+ * Validates that an email has a basic valid format to prevent injection attacks.
+ * This is a defense-in-depth measure alongside escaping.
+ */
+const isValidEmailFormat = (email: string): boolean => {
+	// Basic email format validation - must have @ and no control characters
+	const emailRegex = /^[^\s@\x00-\x1f]+@[^\s@\x00-\x1f]+\.[^\s@\x00-\x1f]+$/;
+	return emailRegex.test(email) && email.length <= 254;
+};
+
 const checkUserExists = async (
 	cognitoClient: CustomerCreatedDependencies['cognitoClient'],
 	userPoolId: string,
 	email: string,
 	stripeCustomerId: string, // Make this required for proper isolation
 ): Promise<boolean> => {
+	// Validate email format before using in filter
+	if (!isValidEmailFormat(email)) {
+		throw new Error('Invalid email format');
+	}
+
 	// Create unique cache key using ONLY customer context
 	// userPoolId is the same for all users, so it doesn't provide isolation
 	const cacheKey = `${stripeCustomerId}:${email}`;
-	
+
 	// Check cache first
 	const cached = userExistenceCache.get(cacheKey);
 	if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -36,10 +60,12 @@ const checkUserExists = async (
 
 	try {
 		// Use ListUsers instead of AdminGetUser to avoid marking user as active
+		// SECURITY: Escape email to prevent filter injection attacks
+		const escapedEmail = escapeFilterValue(email);
 		const listUsersResult = await cognitoClient.send(
 			new ListUsersCommand({
 				UserPoolId: userPoolId,
-				Filter: `email = "${email}"`,
+				Filter: `email = "${escapedEmail}"`,
 				Limit: 1,
 			}),
 		) as ListUsersCommandOutput;

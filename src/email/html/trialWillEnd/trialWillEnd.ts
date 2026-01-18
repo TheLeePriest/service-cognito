@@ -1,8 +1,18 @@
+import {
+  escapeHtml,
+  sanitizeUrl,
+  CDK_INSIGHTS_ALLOWED_DOMAINS,
+} from "../../../shared/utils/htmlSanitizer";
+
 export const trialWillEndHtml = (
   displayName: string,
   trialEndEpochSeconds: number,
   upgradeUrl: string,
 ): string => {
+  // SECURITY: Escape HTML and sanitize URL to prevent XSS attacks
+  const safeDisplayName = escapeHtml(displayName);
+  const safeUpgradeUrl = sanitizeUrl(upgradeUrl, CDK_INSIGHTS_ALLOWED_DOMAINS);
+
   const trialEndDate = new Date(trialEndEpochSeconds * 1000);
   const prettyDate = trialEndDate.toLocaleDateString("en-GB", {
     year: "numeric",
@@ -39,7 +49,7 @@ export const trialWillEndHtml = (
           <tr>
             <td style="padding:0 20px 18px;">
               <p style="margin:0; font-size:16px; line-height:1.6;">
-                Hi ${displayName},
+                Hi ${safeDisplayName},
               </p>
               <p style="margin:12px 0 0; font-size:16px; line-height:1.6;">
                 Just a reminder that your CDK Insights trial is due to end on <strong>${prettyDate}</strong>.
@@ -53,7 +63,7 @@ export const trialWillEndHtml = (
           <tr>
             <td align="center" style="padding:10px 20px 26px;">
               <a
-                href="${upgradeUrl}"
+                href="${safeUpgradeUrl}"
                 style="
                   display:inline-block;
                   background-color:#5da38a;
