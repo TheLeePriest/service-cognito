@@ -95,7 +95,6 @@ export const customerCreated =
 	}: CustomerCreatedDependencies) =>
 	async (event: CustomerCreatedEvent) => {
 		const { detail } = event;
-		console.log("detail", detail);
 		const {
 			stripeSubscriptionId,
 			stripeCustomerId,
@@ -104,8 +103,6 @@ export const customerCreated =
 			createdAt,
 			items,
 		} = detail;
-
-		console.log(items, 'items')
 
 		if (!customerEmail) {
 			logger.error("No valid email found in event data", {
