@@ -309,7 +309,7 @@ export class ServiceCognitoStack extends Stack {
 				ruleName: `${serviceName}-customer-created-rule-${stage}`,
 				eventPattern: {
 					source: ["service.stripe"],
-					detailType: ["SubscriptionCreated"],
+					detailType: ["SubscriptionCreated", "CustomerCreated"],
 				},
 			},
 		);
@@ -464,6 +464,76 @@ export class ServiceCognitoStack extends Stack {
 
 		sendTrialWillEndEmailRule.addTarget(
 			new LambdaFunction(sendTrialWillEndEmailLambda.tsLambdaFunction),
+		);
+
+		// ============================================================================
+		// Send License Upgraded Email (via SES)
+		// ============================================================================
+
+		const sendLicenseUpgradedEmailLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/Email/SendLicenseUpgradedEmail/SendLicenseUpgradedEmail.handler.ts",
+		);
+
+		const sendLicenseUpgradedEmailLogGroup = new LogGroup(
+			this,
+			`${serviceName}-send-license-upgraded-email-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-send-license-upgraded-email-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const sendLicenseUpgradedEmailLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-send-license-upgraded-email-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "sendLicenseUpgradedEmailHandler",
+				entryPath: sendLicenseUpgradedEmailLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-send-license-upgraded-email-${stage}`,
+				customOptions: {
+					logGroup: sendLicenseUpgradedEmailLogGroup,
+					timeout: Duration.seconds(30),
+					memorySize: 256,
+					environment: {
+						SES_FROM_EMAIL: sesFromEmail,
+						SES_REPLY_TO_EMAIL: sesReplyToEmail,
+					},
+				},
+			},
+		);
+
+		// Allow SES sending
+		sendLicenseUpgradedEmailLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				effect: Effect.ALLOW,
+				actions: ["ses:SendEmail", "ses:SendRawEmail"],
+				resources: stage === "prod" && cdkInsightsEmailIdentity
+					? [cdkInsightsEmailIdentity.emailIdentityArn]
+					: ["*"],
+			}),
+		);
+
+		const sendLicenseUpgradedEmailRule = new Rule(
+			this,
+			`${serviceName}-send-license-upgraded-email-rule-${stage}`,
+			{
+				eventBus,
+				ruleName: `${serviceName}-send-license-upgraded-email-rule-${stage}`,
+				eventPattern: {
+					source: ["service.license"],
+					detailType: ["SendLicenseUpgradedEmail"],
+				},
+			},
+		);
+
+		sendLicenseUpgradedEmailRule.addTarget(
+			new LambdaFunction(sendLicenseUpgradedEmailLambda.tsLambdaFunction),
 		);
 	}
 }
