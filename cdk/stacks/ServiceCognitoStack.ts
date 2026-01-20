@@ -141,7 +141,8 @@ export class ServiceCognitoStack extends Stack {
 				}),
 				stripeCustomerId: new StringAttribute({ mutable: true, maxLen: 100 }),
 				apiKeyId: new StringAttribute({ mutable: true, maxLen: 100 }),
-				name: new StringAttribute({ mutable: true, maxLen: 100 }),
+				customerName: new StringAttribute({ mutable: true, maxLen: 100 }),
+				licenseKey: new StringAttribute({ mutable: true, maxLen: 100 }),
 			},
 			lambdaTriggers: {
 				customMessage: userInvitationEmailLambda.tsLambdaFunction,
