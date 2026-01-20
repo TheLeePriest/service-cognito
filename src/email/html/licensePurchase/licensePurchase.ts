@@ -20,28 +20,28 @@ export const licensePurchaseHtml = (
           <tr>
             <td style="background-color:#00140f; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
-                Your Account Credentials
+                Important: Your Temporary Password
               </h2>
-              <div style="background-color:#515A58; padding:20px; border-radius:12px; margin:20px 0;">
-                <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                  <tr>
-                    <td style="padding:10px 0;">
-                      <strong>Email:</strong> ${safeCustomerEmail}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding:10px 0;">
-                      <strong>Temporary Password:</strong>
-                      <span style="font-family: monospace; background-color:#000d0a; padding:5px 10px; border-radius:6px;">
-                        ${safeTempPassword}
-                      </span>
-                    </td>
-                  </tr>
-                </table>
-                <p style="margin:15px 0 0 0; font-size:14px; color:#fcf9f4;">
-                  ⚠️ You will be prompted to change your password when you first log in.
-                </p>
-              </div>
+              <p style="text-align:center; margin:10px 0;">
+                A temporary password has been generated for your account. You will be required
+                to change this password when you log in for the first time.
+              </p>
+              <p
+                style="
+                  background-color:#515A58;
+                  color:#fcf9f4;
+                  padding:10px;
+                  border-radius:12px;
+                  text-align:center;
+                  margin:10px 0;
+                "
+              >
+                Temporary Password: <strong>${safeTempPassword}</strong>
+              </p>
+              <p style="text-align:center; margin:10px 0;">
+                For security reasons, please ensure you change this password immediately upon
+                your first login.
+              </p>
             </td>
           </tr>
   ` : '';
@@ -85,7 +85,7 @@ export const licensePurchaseHtml = (
                 "
               />
               <h1 style="margin:0; font-size:36px; font-weight:bold;">
-                Welcome to CDK Insights! 🎉
+                Welcome to CDK Insights!
               </h1>
             </td>
           </tr>
@@ -94,16 +94,95 @@ export const licensePurchaseHtml = (
           <tr>
             <td style="background-color:#000d0a; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
-                Hi there ${safeDisplayName} 👋🏻,
+                Hi there
+              </h2>
+              <h2 style="margin:5px 0 0 0; font-size:28px; font-weight:bold; text-align:center;">
+                <a href="mailto:${safeCustomerEmail}" style="color:#88c1a8; text-decoration:none;">${safeCustomerEmail || safeDisplayName}</a> 👋🏻,
               </h2>
               <p style="text-align:center; margin:10px 0;">
-                Thank you for choosing CDK Insights! Your account has been created successfully
-                and your license is now active.
+                We're thrilled to welcome you to CDK Insights! Your account has been created,
+                and you're just a few steps away from enhancing your AWS CDK development
+                experience.
               </p>
             </td>
           </tr>
 
           ${accountCredentialsSection}
+
+          <!-- Features Section -->
+          <tr>
+            <td style="background-color:#000d0a; padding:20px;">
+              <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
+                With CDK Insights, you'll be able to:
+              </h2>
+              <table
+                width="100%"
+                cellpadding="0"
+                cellspacing="0"
+                border="0"
+                style="margin:20px 0; padding:0 20px;"
+              >
+                <tr>
+                  <td align="center" width="33%" style="padding:10px;">
+                    <div style="font-size:24px; margin-bottom:10px;" aria-hidden="true" role="presentation">
+                      📊
+                    </div>
+                    <p style="margin:0;">Gain insights on your CDK stacks</p>
+                  </td>
+                  <td align="center" width="33%" style="padding:10px;">
+                    <div style="font-size:24px; margin-bottom:10px;" aria-hidden="true" role="presentation">
+                      💰
+                    </div>
+                    <p style="margin:0;">Optimize your infrastructure costs</p>
+                  </td>
+                  <td align="center" width="33%" style="padding:10px;">
+                    <div style="font-size:24px; margin-bottom:10px;" aria-hidden="true" role="presentation">
+                      🔒
+                    </div>
+                    <p style="margin:0;">Improve security and compliance</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Getting Started Section -->
+          <tr>
+            <td style="background-color:#00140f; padding:20px;">
+              <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
+                Getting Started
+              </h2>
+              <ol style="padding-left:40px; margin:10px 0;">
+                <li>Click the button below to go to the login page</li>
+                <li>Enter your email address and the temporary password provided above</li>
+                <li>You will be prompted to set a new password</li>
+                <li>Once your new password is set, you'll have full access to CDK Insights</li>
+              </ol>
+              <div style="text-align:center; margin:20px 0;">
+                <a
+                  href="https://cdkinsights.dev/login"
+                  style="
+                    display:inline-block;
+                    background-color:#5da38a;
+                    color:#fcf9f4 !important;
+                    text-decoration:none;
+                    padding:12px 44px;
+                    border-radius:12px;
+                    margin-top:20px;
+                  "
+                >
+                  Log In to CDK Insights
+                </a>
+              </div>
+              <p style="text-align:center; margin:10px 0;">
+                If you have any questions or need assistance, don't hesitate to reach out to
+                our support team at <a href="mailto:support@cdkinsights.dev" style="color:#5da38a;">support@cdkinsights.dev</a>.
+              </p>
+              <p style="text-align:center; margin:10px 0;">
+                Best regards,<br />The CDK Insights Team
+              </p>
+            </td>
+          </tr>
 
           <!-- License Details Section -->
           <tr>
@@ -128,108 +207,11 @@ export const licensePurchaseHtml = (
                   </tr>
                   <tr>
                     <td style="padding:10px 0;">
-                      <strong>Status:</strong> <span style="color:#5da38a;">✅ Active</span>
+                      <strong>Status:</strong> <span style="color:#88c1a8;">✅ Active</span>
                     </td>
                   </tr>
                 </table>
               </div>
-            </td>
-          </tr>
-
-          <!-- Features Section -->
-          <tr>
-            <td style="background-color:#00140f; padding:20px;">
-              <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
-                What's Included in Your ${safeLicenseType} License:
-              </h2>
-              <table
-                width="100%"
-                cellpadding="0"
-                cellspacing="0"
-                border="0"
-                style="margin:20px 0; padding:0 20px;"
-              >
-                <tr>
-                  <td align="center" width="33%" style="padding:10px;">
-                    <div style="font-size:24px; margin-bottom:10px;" aria-hidden="true" role="presentation">
-                      🚀
-                    </div>
-                    <p style="margin:0;">AI-Powered Analysis</p>
-                  </td>
-                  <td align="center" width="33%" style="padding:10px;">
-                    <div style="font-size:24px; margin-bottom:10px;" aria-hidden="true" role="presentation">
-                      💰
-                    </div>
-                    <p style="margin:0;">Cost Optimization</p>
-                  </td>
-                  <td align="center" width="33%" style="padding:10px;">
-                    <div style="font-size:24px; margin-bottom:10px;" aria-hidden="true" role="presentation">
-                      🔒
-                    </div>
-                    <p style="margin:0;">Security Insights</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Getting Started Section -->
-          <tr>
-            <td style="background-color:#000d0a; padding:20px;">
-              <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
-                Getting Started
-              </h2>
-              <ol style="padding-left:40px; margin:20px 0;">
-                <li style="margin-bottom:10px;">
-                  <strong>Log in to your dashboard</strong><br/>
-                  <span style="color:#b0b0b0;">Use the credentials above to access your account</span>
-                </li>
-                <li style="margin-bottom:10px;">
-                  <strong>Install the CLI</strong><br/>
-                  <code style="background-color:#515A58; padding:2px 8px; border-radius:4px;">npm install -g cdk-insights</code>
-                </li>
-                <li style="margin-bottom:10px;">
-                  <strong>Configure your license</strong><br/>
-                  <code style="background-color:#515A58; padding:2px 8px; border-radius:4px;">npx cdk-insights config setup</code>
-                </li>
-                <li style="margin-bottom:10px;">
-                  <strong>Run your first analysis</strong><br/>
-                  <code style="background-color:#515A58; padding:2px 8px; border-radius:4px;">npx cdk-insights scan --all</code>
-                </li>
-              </ol>
-              <div style="text-align:center; margin:20px 0;">
-                <a
-                  href="https://cdkinsights.dev/login"
-                  style="
-                    display:inline-block;
-                    background-color:#5da38a;
-                    color:#fcf9f4 !important;
-                    text-decoration:none;
-                    padding:12px 44px;
-                    border-radius:12px;
-                    margin-top:20px;
-                  "
-                >
-                  Go to Dashboard
-                </a>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Support Section -->
-          <tr>
-            <td style="background-color:#00140f; padding:20px;">
-              <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
-                Need Help?
-              </h2>
-              <p style="text-align:center; margin:10px 0;">
-                Our support team is here to help you get the most out of CDK Insights.
-                Don't hesitate to reach out if you have any questions!
-              </p>
-              <p style="text-align:center; margin:10px 0;">
-                📧 <a href="mailto:support@cdkinsights.dev" style="color:#5da38a;">support@cdkinsights.dev</a><br />
-                📖 <a href="https://docs.cdkinsights.dev" style="color:#5da38a;">Documentation</a>
-              </p>
             </td>
           </tr>
 

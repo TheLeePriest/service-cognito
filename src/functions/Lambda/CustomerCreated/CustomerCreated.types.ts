@@ -12,27 +12,30 @@ import type {
 } from "@aws-sdk/client-cognito-identity-provider";
 import type { SendEmailCommand, SendEmailCommandOutput } from "@aws-sdk/client-ses";
 import type { EventBridgeEvent } from "aws-lambda";
+import { z } from "zod";
+
+// Zod schema for LicenseCreated event detail
+export const licenseCreatedDetailSchema = z.object({
+	licenseId: z.string(),
+	licenseKey: z.string().min(1),
+	stripeSubscriptionId: z.string(),
+	stripePriceId: z.string(),
+	licenseType: z.enum(["PRO", "ENTERPRISE"]),
+	status: z.string(),
+	createdAt: z.number(),
+	expiresAt: z.number(),
+	assignedToUserId: z.string(),
+	teamId: z.string().optional(),
+	customerEmail: z.string().email().max(254),
+	customerName: z.string().optional(),
+	productName: z.string().optional(),
+});
+
+export type LicenseCreatedDetail = z.infer<typeof licenseCreatedDetailSchema>;
 
 // LicenseCreated event from service.license
 // This event is emitted after a license is successfully created
-export type LicenseCreatedEvent = EventBridgeEvent<
-	"LicenseCreated",
-	{
-		licenseId: string;
-		licenseKey: string;
-		stripeSubscriptionId: string;
-		stripePriceId: string;
-		licenseType: "PRO" | "ENTERPRISE";
-		status: string;
-		createdAt: number;
-		expiresAt: number;
-		assignedToUserId: string;
-		teamId?: string;
-		customerEmail?: string;
-		customerName?: string;
-		productName?: string;
-	}
->;
+export type LicenseCreatedEvent = EventBridgeEvent<"LicenseCreated", LicenseCreatedDetail>;
 
 // Legacy CustomerCreated event type (kept for backwards compatibility during transition)
 export type CustomerCreatedEvent = EventBridgeEvent<
