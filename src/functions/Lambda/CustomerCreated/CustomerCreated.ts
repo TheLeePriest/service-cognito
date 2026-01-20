@@ -201,6 +201,8 @@ export const customerCreated =
 			createdAt,
 		} = detail;
 
+		console.log("detail in CustomerCreated", JSON.stringify(detail));
+
 		if (!customerEmail) {
 			logger.error("No valid email found in event data", {
 				licenseKey,
