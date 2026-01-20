@@ -1,4 +1,5 @@
 import { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
+import { SESClient } from "@aws-sdk/client-ses";
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
 import { customerCreated } from "./CustomerCreated";
 import { env } from "../../../shared/config/environment";
@@ -6,8 +7,11 @@ import { getLogger } from "../../../shared/logging/logger";
 
 const userPoolId = env.getRequired("USER_POOL_ID", "CustomerCreated handler");
 const eventBusName = env.getRequired("EVENT_BUS_NAME", "CustomerCreated handler");
+const sesFromEmail = env.getRequired("SES_FROM_EMAIL", "CustomerCreated handler");
+const sesReplyToEmail = env.getRequired("SES_REPLY_TO_EMAIL", "CustomerCreated handler");
 
 const cognitoClient = new CognitoIdentityProviderClient({});
+const sesClient = new SESClient({});
 const eventBridgeClient = new EventBridgeClient();
 
 // Create event bridge wrapper
@@ -36,8 +40,11 @@ const eventBridge = {
 export const customerCreatedHandler = customerCreated({
   userPoolId,
   cognitoClient,
+  sesClient,
   eventBridge,
   eventBusName,
+  sesFromEmail,
+  sesReplyToEmail,
   logger: getLogger("CustomerCreated"),
 });
 

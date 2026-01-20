@@ -266,6 +266,12 @@ export class ServiceCognitoStack extends Stack {
 			},
 		);
 
+		// SES email configuration
+		const sesFromEmail =
+			stage === "prod" ? "support@cdkinsights.dev" : "support@dev.cdkinsights.dev";
+		const sesReplyToEmail =
+			stage === "prod" ? "support@cdkinsights.dev" : "support@dev.cdkinsights.dev";
+
 		const customerCreatedLambda = new TSLambdaFunction(
 			this,
 			`${serviceName}-customer-created-lambda-${stage}`,
@@ -283,6 +289,8 @@ export class ServiceCognitoStack extends Stack {
 					environment: {
 						EVENT_BUS_NAME: eventBus.eventBusName,
 						USER_POOL_ID: userPool.userPoolId,
+						SES_FROM_EMAIL: sesFromEmail,
+						SES_REPLY_TO_EMAIL: sesReplyToEmail,
 					},
 				},
 			},
@@ -296,11 +304,27 @@ export class ServiceCognitoStack extends Stack {
 					"cognito-idp:AdminCreateUser",
 					"cognito-idp:AdminGetUser",
 					"cognito-idp:AdminSetUserPassword",
+					"cognito-idp:AdminUpdateUserAttributes",
+					"cognito-idp:ListUsers",
 				],
 				resources: [userPool.userPoolArn],
 			}),
 		);
 
+		// Allow SES sending for welcome emails with license key
+		customerCreatedLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				effect: Effect.ALLOW,
+				actions: ["ses:SendEmail", "ses:SendRawEmail"],
+				resources: stage === "prod" && cdkInsightsEmailIdentity
+					? [cdkInsightsEmailIdentity.emailIdentityArn]
+					: ["*"],
+			}),
+		);
+
+		// Listen to LicenseCreated events from service.license
+		// This ensures the license key is available when creating the Cognito user
+		// so we can send a combined welcome email with temp password + license key
 		const customerCreatedRule = new Rule(
 			this,
 			`${serviceName}-customer-created-rule-${stage}`,
@@ -308,8 +332,8 @@ export class ServiceCognitoStack extends Stack {
 				eventBus,
 				ruleName: `${serviceName}-customer-created-rule-${stage}`,
 				eventPattern: {
-					source: ["service.stripe"],
-					detailType: ["SubscriptionCreated", "CustomerCreated"],
+					source: ["service.license"],
+					detailType: ["LicenseCreated"],
 				},
 			},
 		);
@@ -411,10 +435,7 @@ export class ServiceCognitoStack extends Stack {
 			},
 		);
 
-		const sesFromEmail =
-			stage === "prod" ? "support@cdkinsights.dev" : "support@dev.cdkinsights.dev";
-		const sesReplyToEmail =
-			stage === "prod" ? "support@cdkinsights.dev" : "support@dev.cdkinsights.dev";
+		// Note: sesFromEmail and sesReplyToEmail are defined earlier in this file
 
 		const sendTrialWillEndEmailLambda = new TSLambdaFunction(
 			this,

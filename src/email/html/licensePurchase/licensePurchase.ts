@@ -1,17 +1,57 @@
 import { escapeHtml } from "../../../shared/utils/htmlSanitizer";
 
-export const licensePurchaseHtml = (displayName: string, licenseType: string, licenseKey: string) => {
+export const licensePurchaseHtml = (
+  displayName: string,
+  licenseType: string,
+  licenseKey: string,
+  tempPassword?: string,
+  customerEmail?: string,
+) => {
   // SECURITY: Escape HTML to prevent XSS attacks via user input
   const safeDisplayName = escapeHtml(displayName);
   const safeLicenseType = escapeHtml(licenseType);
   const safeLicenseKey = escapeHtml(licenseKey);
+  const safeTempPassword = tempPassword ? escapeHtml(tempPassword) : undefined;
+  const safeCustomerEmail = customerEmail ? escapeHtml(customerEmail) : undefined;
+
+  // Account credentials section (only shown if temp password is provided)
+  const accountCredentialsSection = safeTempPassword && safeCustomerEmail ? `
+          <!-- Account Credentials Section -->
+          <tr>
+            <td style="background-color:#00140f; padding:20px;">
+              <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
+                Your Account Credentials
+              </h2>
+              <div style="background-color:#515A58; padding:20px; border-radius:12px; margin:20px 0;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="padding:10px 0;">
+                      <strong>Email:</strong> ${safeCustomerEmail}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:10px 0;">
+                      <strong>Temporary Password:</strong>
+                      <span style="font-family: monospace; background-color:#000d0a; padding:5px 10px; border-radius:6px;">
+                        ${safeTempPassword}
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:15px 0 0 0; font-size:14px; color:#fcf9f4;">
+                  ⚠️ You will be prompted to change your password when you first log in.
+                </p>
+              </div>
+            </td>
+          </tr>
+  ` : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>License Purchase Confirmation - CDK Insights</title>
+  <title>Welcome to CDK Insights - Your License Details</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -45,7 +85,7 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
                 "
               />
               <h1 style="margin:0; font-size:36px; font-weight:bold;">
-                License Purchase Confirmed! 🎉
+                Welcome to CDK Insights! 🎉
               </h1>
             </td>
           </tr>
@@ -57,15 +97,17 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
                 Hi there ${safeDisplayName} 👋🏻,
               </h2>
               <p style="text-align:center; margin:10px 0;">
-                Thank you for purchasing a CDK Insights license! Your payment has been processed successfully,
+                Thank you for choosing CDK Insights! Your account has been created successfully
                 and your license is now active.
               </p>
             </td>
           </tr>
 
+          ${accountCredentialsSection}
+
           <!-- License Details Section -->
           <tr>
-            <td style="background-color:#00140f; padding:20px;">
+            <td style="background-color:#000d0a; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
                 Your License Details
               </h2>
@@ -96,7 +138,7 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
 
           <!-- Features Section -->
           <tr>
-            <td style="background-color:#000d0a; padding:20px;">
+            <td style="background-color:#00140f; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
                 What's Included in Your ${safeLicenseType} License:
               </h2>
@@ -112,13 +154,13 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
                     <div style="font-size:24px; margin-bottom:10px;" aria-hidden="true" role="presentation">
                       🚀
                     </div>
-                    <p style="margin:0;">Advanced CDK Analysis</p>
+                    <p style="margin:0;">AI-Powered Analysis</p>
                   </td>
                   <td align="center" width="33%" style="padding:10px;">
                     <div style="font-size:24px; margin-bottom:10px;" aria-hidden="true" role="presentation">
-                      📊
+                      💰
                     </div>
-                    <p style="margin:0;">Detailed Cost Reports</p>
+                    <p style="margin:0;">Cost Optimization</p>
                   </td>
                   <td align="center" width="33%" style="padding:10px;">
                     <div style="font-size:24px; margin-bottom:10px;" aria-hidden="true" role="presentation">
@@ -131,21 +173,33 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
             </td>
           </tr>
 
-          <!-- Next Steps Section -->
+          <!-- Getting Started Section -->
           <tr>
-            <td style="background-color:#00140f; padding:20px;">
+            <td style="background-color:#000d0a; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
                 Getting Started
               </h2>
-              <ol style="padding-left:40px; margin:10px 0;">
-                <li>Log in to your CDK Insights dashboard</li>
-                <li>Enter your license key when prompted</li>
-                <li>Start analyzing your CDK stacks</li>
-                <li>Explore the advanced features available with your license</li>
+              <ol style="padding-left:40px; margin:20px 0;">
+                <li style="margin-bottom:10px;">
+                  <strong>Log in to your dashboard</strong><br/>
+                  <span style="color:#b0b0b0;">Use the credentials above to access your account</span>
+                </li>
+                <li style="margin-bottom:10px;">
+                  <strong>Install the CLI</strong><br/>
+                  <code style="background-color:#515A58; padding:2px 8px; border-radius:4px;">npm install -g cdk-insights</code>
+                </li>
+                <li style="margin-bottom:10px;">
+                  <strong>Configure your license</strong><br/>
+                  <code style="background-color:#515A58; padding:2px 8px; border-radius:4px;">npx cdk-insights config setup</code>
+                </li>
+                <li style="margin-bottom:10px;">
+                  <strong>Run your first analysis</strong><br/>
+                  <code style="background-color:#515A58; padding:2px 8px; border-radius:4px;">npx cdk-insights scan --all</code>
+                </li>
               </ol>
               <div style="text-align:center; margin:20px 0;">
                 <a
-                  href="https://main.d3dnmattfmekt9.amplifyapp.com/dashboard"
+                  href="https://cdkinsights.dev/login"
                   style="
                     display:inline-block;
                     background-color:#5da38a;
@@ -164,7 +218,7 @@ export const licensePurchaseHtml = (displayName: string, licenseType: string, li
 
           <!-- Support Section -->
           <tr>
-            <td style="background-color:#000d0a; padding:20px;">
+            <td style="background-color:#00140f; padding:20px;">
               <h2 style="margin:0; font-size:28px; font-weight:bold; text-align:center;">
                 Need Help?
               </h2>
