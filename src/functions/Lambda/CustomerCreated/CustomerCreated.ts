@@ -168,6 +168,7 @@ export const customerCreated =
 			customerName,
 			productName,
 			stripeSubscriptionId,
+			stripeCustomerId,
 			createdAt,
 		} = parseResult.data;
 
@@ -265,6 +266,7 @@ export const customerCreated =
 			customerName,
 			signUpDate: createdAt,
 			licenseKey,
+			stripeCustomerId,
 			stripeSubscriptionId,
 			organization: "",
 			createdAt,

@@ -19,6 +19,7 @@ export const licenseCreatedDetailSchema = z.object({
 	licenseId: z.string(),
 	licenseKey: z.string().min(1),
 	stripeSubscriptionId: z.string(),
+	stripeCustomerId: z.string().min(1),
 	stripePriceId: z.string(),
 	licenseType: z.enum(["PRO", "ENTERPRISE"]),
 	status: z.string(),
