@@ -87,7 +87,6 @@ const sendWelcomeEmail = async ({
 		displayLicenseType,
 		licenseKey,
 		tempPassword,
-		customerEmail,
 	);
 
 	const textBody = `
