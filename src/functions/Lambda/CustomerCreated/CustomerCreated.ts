@@ -259,18 +259,20 @@ export const customerCreated =
 		}
 
 		// Emit CognitoUserCreated event
+		// Note: Timestamps must be strings as service-user parses them with Number.parseInt()
+		const createdAtStr = String(createdAt);
 		await eventBridge.putEvent(eventBusName, "service.cognito", "CognitoUserCreated", {
 			userId: userSub,
 			userName: customerEmail,
 			cdkInsightsId: userSub,
 			customerName,
-			signUpDate: createdAt,
+			signUpDate: createdAtStr,
 			licenseKey,
 			stripeCustomerId,
 			stripeSubscriptionId,
 			organization: "",
-			createdAt,
-			updatedAt: createdAt,
+			createdAt: createdAtStr,
+			updatedAt: createdAtStr,
 		});
 
 		logger.info("Cognito user created successfully", {
