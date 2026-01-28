@@ -7,8 +7,9 @@ import { getLogger } from "../../../shared/logging/logger";
 
 const userPoolId = env.getRequired("USER_POOL_ID", "CustomerCreated handler");
 const eventBusName = env.getRequired("EVENT_BUS_NAME", "CustomerCreated handler");
-const sesFromEmail = env.getRequired("SES_FROM_EMAIL", "CustomerCreated handler");
-const sesReplyToEmail = env.getRequired("SES_REPLY_TO_EMAIL", "CustomerCreated handler");
+const sesFromEmail = env.get("SES_FROM_EMAIL") ?? "noreply@cdkinsights.dev";
+const sesReplyToEmail = env.get("SES_REPLY_TO_EMAIL") ?? "support@cdkinsights.dev";
+const stage = env.get("STAGE") ?? "dev";
 
 const cognitoClient = new CognitoIdentityProviderClient({});
 const sesClient = new SESClient({});
@@ -45,6 +46,7 @@ export const customerCreatedHandler = customerCreated({
   eventBusName,
   sesFromEmail,
   sesReplyToEmail,
+  stage: stage as "dev" | "prod" | "test",
   logger: getLogger("CustomerCreated"),
 });
 

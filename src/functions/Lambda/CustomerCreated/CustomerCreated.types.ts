@@ -99,6 +99,7 @@ export type CustomerCreatedDependencies = {
 	eventBusName: string;
 	sesFromEmail: string;
 	sesReplyToEmail: string;
+	stage: "dev" | "prod" | "test";
 	logger: {
 		info: (message: string, context?: Record<string, unknown>) => void;
 		error: (message: string, context?: Record<string, unknown>) => void;

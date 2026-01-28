@@ -268,10 +268,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		// SES email configuration
+		// In dev, use a verified email address since dev.cdkinsights.dev domain is not in this account
 		const sesFromEmail =
-			stage === "prod" ? "support@cdkinsights.dev" : "support@dev.cdkinsights.dev";
+			stage === "prod" ? "support@cdkinsights.dev" : "lpleepriest@gmail.com";
 		const sesReplyToEmail =
-			stage === "prod" ? "support@cdkinsights.dev" : "support@dev.cdkinsights.dev";
+			stage === "prod" ? "support@cdkinsights.dev" : "lpleepriest@gmail.com";
 
 		const customerCreatedLambda = new TSLambdaFunction(
 			this,
@@ -292,6 +293,7 @@ export class ServiceCognitoStack extends Stack {
 						USER_POOL_ID: userPool.userPoolId,
 						SES_FROM_EMAIL: sesFromEmail,
 						SES_REPLY_TO_EMAIL: sesReplyToEmail,
+						STAGE: stage,
 					},
 				},
 			},

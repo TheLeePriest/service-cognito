@@ -148,6 +148,7 @@ export const customerCreated =
 		eventBusName,
 		sesFromEmail,
 		sesReplyToEmail,
+		stage,
 		logger,
 	}: CustomerCreatedDependencies) =>
 	async (event: LicenseCreatedEvent) => {
@@ -180,7 +181,7 @@ export const customerCreated =
 		const userExists = await checkUserExists(cognitoClient, userPoolId, customerEmail);
 
 		if (userExists) {
-			logger.info("User already exists in Cognito", logContext);
+			logger.info("User already exists in Cognito, emitting event for downstream services", logContext);
 
 			// Update name if available and not previously set
 			if (customerName) {
@@ -203,6 +204,50 @@ export const customerCreated =
 					});
 				}
 			}
+
+			// Fetch existing user's sub to emit event
+			try {
+				const listUsersResult = await cognitoClient.send(
+					new ListUsersCommand({
+						UserPoolId: userPoolId,
+						Filter: `email = "${escapeForCognitoFilter(customerEmail)}"`,
+						Limit: 1,
+					}),
+				) as ListUsersCommandOutput;
+
+				const existingUser = listUsersResult.Users?.[0];
+				const userSub = existingUser?.Attributes?.find((attr: { Name?: string; Value?: string }) => attr.Name === "sub")?.Value;
+
+				if (userSub) {
+					// Emit CognitoUserCreated event for existing user
+					const createdAtStr = String(createdAt);
+					await eventBridge.putEvent(eventBusName, "service.cognito", "CognitoUserCreated", {
+						userId: userSub,
+						userName: customerEmail,
+						cdkInsightsId: userSub,
+						customerName,
+						signUpDate: createdAtStr,
+						licenseKey,
+						stripeCustomerId,
+						stripeSubscriptionId,
+						organization: "",
+						createdAt: createdAtStr,
+						updatedAt: createdAtStr,
+					});
+					logger.info("Emitted CognitoUserCreated event for existing user", {
+						...logContext,
+						cognitoUserId: userSub,
+					});
+				} else {
+					logger.error("Could not find sub for existing user", logContext);
+				}
+			} catch (fetchError) {
+				logger.error("Failed to fetch existing user details for event emission", {
+					...logContext,
+					error: fetchError instanceof Error ? fetchError.message : String(fetchError),
+				});
+			}
+
 			return;
 		}
 
