@@ -287,7 +287,7 @@ export class ServiceCognitoStack extends Stack {
 				customOptions: {
 					logGroup: customerCreatedLogGroup,
 					timeout: Duration.seconds(30),
-					memorySize: 256,
+					memorySize: 192, // Optimized: I/O bound (Cognito + EventBridge + SES)
 					environment: {
 						EVENT_BUS_NAME: eventBus.eventBusName,
 						USER_POOL_ID: userPool.userPoolId,
@@ -378,7 +378,7 @@ export class ServiceCognitoStack extends Stack {
 				customOptions: {
 					logGroup: teamMemberActivatedLogGroup,
 					timeout: Duration.seconds(30),
-					memorySize: 256,
+					memorySize: 192, // Optimized: I/O bound (Cognito + EventBridge)
 					environment: {
 						EVENT_BUS_NAME: eventBus.eventBusName,
 						USER_POOL_ID: userPool.userPoolId,
@@ -453,7 +453,7 @@ export class ServiceCognitoStack extends Stack {
 				customOptions: {
 					logGroup: sendTrialWillEndEmailLogGroup,
 					timeout: Duration.seconds(30),
-					memorySize: 256,
+					memorySize: 192, // Optimized: I/O bound (SES only)
 					environment: {
 						SES_FROM_EMAIL: sesFromEmail,
 						SES_REPLY_TO_EMAIL: sesReplyToEmail,
@@ -523,7 +523,7 @@ export class ServiceCognitoStack extends Stack {
 				customOptions: {
 					logGroup: sendLicenseUpgradedEmailLogGroup,
 					timeout: Duration.seconds(30),
-					memorySize: 256,
+					memorySize: 192, // Optimized: I/O bound (SES only)
 					environment: {
 						SES_FROM_EMAIL: sesFromEmail,
 						SES_REPLY_TO_EMAIL: sesReplyToEmail,
@@ -558,6 +558,765 @@ export class ServiceCognitoStack extends Stack {
 
 		sendLicenseUpgradedEmailRule.addTarget(
 			new LambdaFunction(sendLicenseUpgradedEmailLambda.tsLambdaFunction),
+		);
+
+		// ============================================================================
+		// Send Payment Failed Email (via SES)
+		// ============================================================================
+
+		const sendPaymentFailedEmailLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/Email/SendPaymentFailedEmail/SendPaymentFailedEmail.handler.ts",
+		);
+
+		const sendPaymentFailedEmailLogGroup = new LogGroup(
+			this,
+			`${serviceName}-payment-failed-email-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-payment-failed-email-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const sendPaymentFailedEmailLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-payment-failed-email-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "sendPaymentFailedEmailHandler",
+				entryPath: sendPaymentFailedEmailLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-payment-failed-email-${stage}`,
+				customOptions: {
+					logGroup: sendPaymentFailedEmailLogGroup,
+					timeout: Duration.seconds(30),
+					memorySize: 192, // Optimized: I/O bound (SES only)
+					environment: {
+						SES_FROM_EMAIL: sesFromEmail,
+						SES_REPLY_TO_EMAIL: sesReplyToEmail,
+					},
+				},
+			},
+		);
+
+		sendPaymentFailedEmailLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				effect: Effect.ALLOW,
+				actions: ["ses:SendEmail", "ses:SendRawEmail"],
+				resources: stage === "prod" && cdkInsightsEmailIdentity
+					? [cdkInsightsEmailIdentity.emailIdentityArn]
+					: ["*"],
+			}),
+		);
+
+		const sendPaymentFailedEmailRule = new Rule(
+			this,
+			`${serviceName}-payment-failed-email-rule-${stage}`,
+			{
+				eventBus,
+				ruleName: `${serviceName}-payment-failed-email-rule-${stage}`,
+				eventPattern: {
+					source: ["service.stripe"],
+					detailType: ["SendPaymentFailedEmail"],
+				},
+			},
+		);
+
+		sendPaymentFailedEmailRule.addTarget(
+			new LambdaFunction(sendPaymentFailedEmailLambda.tsLambdaFunction),
+		);
+
+		// ============================================================================
+		// Send Trial Expired Email (via SES)
+		// ============================================================================
+
+		const sendTrialExpiredEmailLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/Email/SendTrialExpiredEmail/SendTrialExpiredEmail.handler.ts",
+		);
+
+		const sendTrialExpiredEmailLogGroup = new LogGroup(
+			this,
+			`${serviceName}-trial-expired-email-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-trial-expired-email-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const sendTrialExpiredEmailLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-trial-expired-email-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "sendTrialExpiredEmailHandler",
+				entryPath: sendTrialExpiredEmailLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-trial-expired-email-${stage}`,
+				customOptions: {
+					logGroup: sendTrialExpiredEmailLogGroup,
+					timeout: Duration.seconds(30),
+					memorySize: 192, // Optimized: I/O bound (SES only)
+					environment: {
+						SES_FROM_EMAIL: sesFromEmail,
+						SES_REPLY_TO_EMAIL: sesReplyToEmail,
+					},
+				},
+			},
+		);
+
+		sendTrialExpiredEmailLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				effect: Effect.ALLOW,
+				actions: ["ses:SendEmail", "ses:SendRawEmail"],
+				resources: stage === "prod" && cdkInsightsEmailIdentity
+					? [cdkInsightsEmailIdentity.emailIdentityArn]
+					: ["*"],
+			}),
+		);
+
+		const sendTrialExpiredEmailRule = new Rule(
+			this,
+			`${serviceName}-trial-expired-email-rule-${stage}`,
+			{
+				eventBus,
+				ruleName: `${serviceName}-trial-expired-email-rule-${stage}`,
+				eventPattern: {
+					source: ["service.license"],
+					detailType: ["SendTrialExpiredEmail"],
+				},
+			},
+		);
+
+		sendTrialExpiredEmailRule.addTarget(
+			new LambdaFunction(sendTrialExpiredEmailLambda.tsLambdaFunction),
+		);
+
+		// ============================================================================
+		// Send Subscription Cancelled Email (via SES)
+		// ============================================================================
+
+		const sendSubscriptionCancelledEmailLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/Email/SendSubscriptionCancelledEmail/SendSubscriptionCancelledEmail.handler.ts",
+		);
+
+		const sendSubscriptionCancelledEmailLogGroup = new LogGroup(
+			this,
+			`${serviceName}-sub-cancelled-email-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-sub-cancelled-email-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const sendSubscriptionCancelledEmailLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-sub-cancelled-email-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "sendSubscriptionCancelledEmailHandler",
+				entryPath: sendSubscriptionCancelledEmailLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-sub-cancelled-email-${stage}`,
+				customOptions: {
+					logGroup: sendSubscriptionCancelledEmailLogGroup,
+					timeout: Duration.seconds(30),
+					memorySize: 192, // Optimized: I/O bound (SES only)
+					environment: {
+						SES_FROM_EMAIL: sesFromEmail,
+						SES_REPLY_TO_EMAIL: sesReplyToEmail,
+					},
+				},
+			},
+		);
+
+		sendSubscriptionCancelledEmailLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				effect: Effect.ALLOW,
+				actions: ["ses:SendEmail", "ses:SendRawEmail"],
+				resources: stage === "prod" && cdkInsightsEmailIdentity
+					? [cdkInsightsEmailIdentity.emailIdentityArn]
+					: ["*"],
+			}),
+		);
+
+		const sendSubscriptionCancelledEmailRule = new Rule(
+			this,
+			`${serviceName}-sub-cancelled-email-rule-${stage}`,
+			{
+				eventBus,
+				ruleName: `${serviceName}-sub-cancelled-email-rule-${stage}`,
+				eventPattern: {
+					source: ["service.stripe"],
+					detailType: ["SendSubscriptionCancelledEmail"],
+				},
+			},
+		);
+
+		sendSubscriptionCancelledEmailRule.addTarget(
+			new LambdaFunction(sendSubscriptionCancelledEmailLambda.tsLambdaFunction),
+		);
+
+		// ============================================================================
+		// Send Subscription Renewal Reminder Email (via SES)
+		// ============================================================================
+
+		const sendSubscriptionRenewalReminderEmailLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/Email/SendSubscriptionRenewalReminderEmail/SendSubscriptionRenewalReminderEmail.handler.ts",
+		);
+
+		const sendSubscriptionRenewalReminderEmailLogGroup = new LogGroup(
+			this,
+			`${serviceName}-sub-renewal-reminder-email-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-sub-renewal-reminder-email-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const sendSubscriptionRenewalReminderEmailLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-sub-renewal-reminder-email-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "sendSubscriptionRenewalReminderEmailHandler",
+				entryPath: sendSubscriptionRenewalReminderEmailLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-sub-renewal-reminder-email-${stage}`,
+				customOptions: {
+					logGroup: sendSubscriptionRenewalReminderEmailLogGroup,
+					timeout: Duration.seconds(30),
+					memorySize: 192, // Optimized: I/O bound (SES only)
+					environment: {
+						SES_FROM_EMAIL: sesFromEmail,
+						SES_REPLY_TO_EMAIL: sesReplyToEmail,
+					},
+				},
+			},
+		);
+
+		sendSubscriptionRenewalReminderEmailLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				effect: Effect.ALLOW,
+				actions: ["ses:SendEmail", "ses:SendRawEmail"],
+				resources: stage === "prod" && cdkInsightsEmailIdentity
+					? [cdkInsightsEmailIdentity.emailIdentityArn]
+					: ["*"],
+			}),
+		);
+
+		const sendSubscriptionRenewalReminderEmailRule = new Rule(
+			this,
+			`${serviceName}-sub-renewal-reminder-email-rule-${stage}`,
+			{
+				eventBus,
+				ruleName: `${serviceName}-sub-renewal-reminder-email-rule-${stage}`,
+				eventPattern: {
+					source: ["service.stripe"],
+					detailType: ["SendSubscriptionRenewalReminderEmail"],
+				},
+			},
+		);
+
+		sendSubscriptionRenewalReminderEmailRule.addTarget(
+			new LambdaFunction(sendSubscriptionRenewalReminderEmailLambda.tsLambdaFunction),
+		);
+
+		// ============================================================================
+		// Send Subscription Renewed Email (via SES)
+		// ============================================================================
+
+		const sendSubscriptionRenewedEmailLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/Email/SendSubscriptionRenewedEmail/SendSubscriptionRenewedEmail.handler.ts",
+		);
+
+		const sendSubscriptionRenewedEmailLogGroup = new LogGroup(
+			this,
+			`${serviceName}-sub-renewed-email-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-sub-renewed-email-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const sendSubscriptionRenewedEmailLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-sub-renewed-email-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "sendSubscriptionRenewedEmailHandler",
+				entryPath: sendSubscriptionRenewedEmailLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-sub-renewed-email-${stage}`,
+				customOptions: {
+					logGroup: sendSubscriptionRenewedEmailLogGroup,
+					timeout: Duration.seconds(30),
+					memorySize: 192, // Optimized: I/O bound (SES only)
+					environment: {
+						SES_FROM_EMAIL: sesFromEmail,
+						SES_REPLY_TO_EMAIL: sesReplyToEmail,
+					},
+				},
+			},
+		);
+
+		sendSubscriptionRenewedEmailLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				effect: Effect.ALLOW,
+				actions: ["ses:SendEmail", "ses:SendRawEmail"],
+				resources: stage === "prod" && cdkInsightsEmailIdentity
+					? [cdkInsightsEmailIdentity.emailIdentityArn]
+					: ["*"],
+			}),
+		);
+
+		const sendSubscriptionRenewedEmailRule = new Rule(
+			this,
+			`${serviceName}-sub-renewed-email-rule-${stage}`,
+			{
+				eventBus,
+				ruleName: `${serviceName}-sub-renewed-email-rule-${stage}`,
+				eventPattern: {
+					source: ["service.stripe"],
+					detailType: ["SendSubscriptionRenewedEmail"],
+				},
+			},
+		);
+
+		sendSubscriptionRenewedEmailRule.addTarget(
+			new LambdaFunction(sendSubscriptionRenewedEmailLambda.tsLambdaFunction),
+		);
+
+		// ============================================================================
+		// Send Quota Warning Email (via SES)
+		// ============================================================================
+
+		const sendQuotaWarningEmailLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/Email/SendQuotaWarningEmail/SendQuotaWarningEmail.handler.ts",
+		);
+
+		const sendQuotaWarningEmailLogGroup = new LogGroup(
+			this,
+			`${serviceName}-quota-warning-email-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-quota-warning-email-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const sendQuotaWarningEmailLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-quota-warning-email-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "sendQuotaWarningEmailHandler",
+				entryPath: sendQuotaWarningEmailLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-quota-warning-email-${stage}`,
+				customOptions: {
+					logGroup: sendQuotaWarningEmailLogGroup,
+					timeout: Duration.seconds(30),
+					memorySize: 192, // Optimized: I/O bound (SES only)
+					environment: {
+						SES_FROM_EMAIL: sesFromEmail,
+						SES_REPLY_TO_EMAIL: sesReplyToEmail,
+					},
+				},
+			},
+		);
+
+		sendQuotaWarningEmailLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				effect: Effect.ALLOW,
+				actions: ["ses:SendEmail", "ses:SendRawEmail"],
+				resources: stage === "prod" && cdkInsightsEmailIdentity
+					? [cdkInsightsEmailIdentity.emailIdentityArn]
+					: ["*"],
+			}),
+		);
+
+		const sendQuotaWarningEmailRule = new Rule(
+			this,
+			`${serviceName}-quota-warning-email-rule-${stage}`,
+			{
+				eventBus,
+				ruleName: `${serviceName}-quota-warning-email-rule-${stage}`,
+				eventPattern: {
+					source: ["service.license"],
+					detailType: ["SendQuotaWarningEmail"],
+				},
+			},
+		);
+
+		sendQuotaWarningEmailRule.addTarget(
+			new LambdaFunction(sendQuotaWarningEmailLambda.tsLambdaFunction),
+		);
+
+		// ============================================================================
+		// Send Quota Exceeded Email (via SES)
+		// ============================================================================
+
+		const sendQuotaExceededEmailLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/Email/SendQuotaExceededEmail/SendQuotaExceededEmail.handler.ts",
+		);
+
+		const sendQuotaExceededEmailLogGroup = new LogGroup(
+			this,
+			`${serviceName}-quota-exceeded-email-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-quota-exceeded-email-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const sendQuotaExceededEmailLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-quota-exceeded-email-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "sendQuotaExceededEmailHandler",
+				entryPath: sendQuotaExceededEmailLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-quota-exceeded-email-${stage}`,
+				customOptions: {
+					logGroup: sendQuotaExceededEmailLogGroup,
+					timeout: Duration.seconds(30),
+					memorySize: 192, // Optimized: I/O bound (SES only)
+					environment: {
+						SES_FROM_EMAIL: sesFromEmail,
+						SES_REPLY_TO_EMAIL: sesReplyToEmail,
+					},
+				},
+			},
+		);
+
+		sendQuotaExceededEmailLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				effect: Effect.ALLOW,
+				actions: ["ses:SendEmail", "ses:SendRawEmail"],
+				resources: stage === "prod" && cdkInsightsEmailIdentity
+					? [cdkInsightsEmailIdentity.emailIdentityArn]
+					: ["*"],
+			}),
+		);
+
+		const sendQuotaExceededEmailRule = new Rule(
+			this,
+			`${serviceName}-quota-exceeded-email-rule-${stage}`,
+			{
+				eventBus,
+				ruleName: `${serviceName}-quota-exceeded-email-rule-${stage}`,
+				eventPattern: {
+					source: ["service.license"],
+					detailType: ["SendQuotaExceededEmail"],
+				},
+			},
+		);
+
+		sendQuotaExceededEmailRule.addTarget(
+			new LambdaFunction(sendQuotaExceededEmailLambda.tsLambdaFunction),
+		);
+
+		// ============================================================================
+		// Send Monthly Usage Summary Email (via SES)
+		// ============================================================================
+
+		const sendMonthlyUsageSummaryEmailLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/Email/SendMonthlyUsageSummaryEmail/SendMonthlyUsageSummaryEmail.handler.ts",
+		);
+
+		const sendMonthlyUsageSummaryEmailLogGroup = new LogGroup(
+			this,
+			`${serviceName}-usage-summary-email-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-usage-summary-email-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const sendMonthlyUsageSummaryEmailLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-usage-summary-email-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "sendMonthlyUsageSummaryEmailHandler",
+				entryPath: sendMonthlyUsageSummaryEmailLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-usage-summary-email-${stage}`,
+				customOptions: {
+					logGroup: sendMonthlyUsageSummaryEmailLogGroup,
+					timeout: Duration.seconds(30),
+					memorySize: 192, // Optimized: I/O bound (SES only)
+					environment: {
+						SES_FROM_EMAIL: sesFromEmail,
+						SES_REPLY_TO_EMAIL: sesReplyToEmail,
+					},
+				},
+			},
+		);
+
+		sendMonthlyUsageSummaryEmailLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				effect: Effect.ALLOW,
+				actions: ["ses:SendEmail", "ses:SendRawEmail"],
+				resources: stage === "prod" && cdkInsightsEmailIdentity
+					? [cdkInsightsEmailIdentity.emailIdentityArn]
+					: ["*"],
+			}),
+		);
+
+		const sendMonthlyUsageSummaryEmailRule = new Rule(
+			this,
+			`${serviceName}-usage-summary-email-rule-${stage}`,
+			{
+				eventBus,
+				ruleName: `${serviceName}-usage-summary-email-rule-${stage}`,
+				eventPattern: {
+					source: ["service.license"],
+					detailType: ["SendMonthlyUsageSummaryEmail"],
+				},
+			},
+		);
+
+		sendMonthlyUsageSummaryEmailRule.addTarget(
+			new LambdaFunction(sendMonthlyUsageSummaryEmailLambda.tsLambdaFunction),
+		);
+
+		// ============================================================================
+		// Send Re-Engagement Email (via SES)
+		// ============================================================================
+
+		const sendReEngagementEmailLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/Email/SendReEngagementEmail/SendReEngagementEmail.handler.ts",
+		);
+
+		const sendReEngagementEmailLogGroup = new LogGroup(
+			this,
+			`${serviceName}-reengagement-email-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-reengagement-email-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const sendReEngagementEmailLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-reengagement-email-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "sendReEngagementEmailHandler",
+				entryPath: sendReEngagementEmailLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-reengagement-email-${stage}`,
+				customOptions: {
+					logGroup: sendReEngagementEmailLogGroup,
+					timeout: Duration.seconds(30),
+					memorySize: 192, // Optimized: I/O bound (SES only)
+					environment: {
+						SES_FROM_EMAIL: sesFromEmail,
+						SES_REPLY_TO_EMAIL: sesReplyToEmail,
+					},
+				},
+			},
+		);
+
+		sendReEngagementEmailLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				effect: Effect.ALLOW,
+				actions: ["ses:SendEmail", "ses:SendRawEmail"],
+				resources: stage === "prod" && cdkInsightsEmailIdentity
+					? [cdkInsightsEmailIdentity.emailIdentityArn]
+					: ["*"],
+			}),
+		);
+
+		const sendReEngagementEmailRule = new Rule(
+			this,
+			`${serviceName}-reengagement-email-rule-${stage}`,
+			{
+				eventBus,
+				ruleName: `${serviceName}-reengagement-email-rule-${stage}`,
+				eventPattern: {
+					source: ["service.license"],
+					detailType: ["SendReEngagementEmail"],
+				},
+			},
+		);
+
+		sendReEngagementEmailRule.addTarget(
+			new LambdaFunction(sendReEngagementEmailLambda.tsLambdaFunction),
+		);
+
+		// ============================================================================
+		// Send Feature Announcement Email (via SES)
+		// ============================================================================
+
+		const sendFeatureAnnouncementEmailLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/Email/SendFeatureAnnouncementEmail/SendFeatureAnnouncementEmail.handler.ts",
+		);
+
+		const sendFeatureAnnouncementEmailLogGroup = new LogGroup(
+			this,
+			`${serviceName}-feature-announce-email-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-feature-announce-email-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const sendFeatureAnnouncementEmailLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-feature-announce-email-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "sendFeatureAnnouncementEmailHandler",
+				entryPath: sendFeatureAnnouncementEmailLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-feature-announce-email-${stage}`,
+				customOptions: {
+					logGroup: sendFeatureAnnouncementEmailLogGroup,
+					timeout: Duration.seconds(30),
+					memorySize: 192, // Optimized: I/O bound (SES only)
+					environment: {
+						SES_FROM_EMAIL: sesFromEmail,
+						SES_REPLY_TO_EMAIL: sesReplyToEmail,
+					},
+				},
+			},
+		);
+
+		sendFeatureAnnouncementEmailLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				effect: Effect.ALLOW,
+				actions: ["ses:SendEmail", "ses:SendRawEmail"],
+				resources: stage === "prod" && cdkInsightsEmailIdentity
+					? [cdkInsightsEmailIdentity.emailIdentityArn]
+					: ["*"],
+			}),
+		);
+
+		const sendFeatureAnnouncementEmailRule = new Rule(
+			this,
+			`${serviceName}-feature-announce-email-rule-${stage}`,
+			{
+				eventBus,
+				ruleName: `${serviceName}-feature-announce-email-rule-${stage}`,
+				eventPattern: {
+					source: ["service.marketing"],
+					detailType: ["SendFeatureAnnouncementEmail"],
+				},
+			},
+		);
+
+		sendFeatureAnnouncementEmailRule.addTarget(
+			new LambdaFunction(sendFeatureAnnouncementEmailLambda.tsLambdaFunction),
+		);
+
+		// ============================================================================
+		// Send Feedback Request Email (via SES)
+		// ============================================================================
+
+		const sendFeedbackRequestEmailLambdaPath = path.join(
+			__dirname,
+			"../../src/functions/Lambda/Email/SendFeedbackRequestEmail/SendFeedbackRequestEmail.handler.ts",
+		);
+
+		const sendFeedbackRequestEmailLogGroup = new LogGroup(
+			this,
+			`${serviceName}-feedback-email-log-group-${stage}`,
+			{
+				logGroupName: `/aws/lambda/${serviceName}-feedback-email-${stage}`,
+				retention: 7,
+				removalPolicy:
+					stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			},
+		);
+
+		const sendFeedbackRequestEmailLambda = new TSLambdaFunction(
+			this,
+			`${serviceName}-feedback-email-lambda-${stage}`,
+			{
+				serviceName,
+				stage,
+				handlerName: "sendFeedbackRequestEmailHandler",
+				entryPath: sendFeedbackRequestEmailLambdaPath,
+				tsConfigPath,
+				functionName: `${serviceName}-feedback-email-${stage}`,
+				customOptions: {
+					logGroup: sendFeedbackRequestEmailLogGroup,
+					timeout: Duration.seconds(30),
+					memorySize: 192, // Optimized: I/O bound (SES only)
+					environment: {
+						SES_FROM_EMAIL: sesFromEmail,
+						SES_REPLY_TO_EMAIL: sesReplyToEmail,
+					},
+				},
+			},
+		);
+
+		sendFeedbackRequestEmailLambda.tsLambdaFunction.addToRolePolicy(
+			new PolicyStatement({
+				effect: Effect.ALLOW,
+				actions: ["ses:SendEmail", "ses:SendRawEmail"],
+				resources: stage === "prod" && cdkInsightsEmailIdentity
+					? [cdkInsightsEmailIdentity.emailIdentityArn]
+					: ["*"],
+			}),
+		);
+
+		const sendFeedbackRequestEmailRule = new Rule(
+			this,
+			`${serviceName}-feedback-email-rule-${stage}`,
+			{
+				eventBus,
+				ruleName: `${serviceName}-feedback-email-rule-${stage}`,
+				eventPattern: {
+					source: ["service.license"],
+					detailType: ["SendFeedbackRequestEmail"],
+				},
+			},
+		);
+
+		sendFeedbackRequestEmailRule.addTarget(
+			new LambdaFunction(sendFeedbackRequestEmailLambda.tsLambdaFunction),
 		);
 	}
 }
