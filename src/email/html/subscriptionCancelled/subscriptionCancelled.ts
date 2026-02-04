@@ -1,13 +1,39 @@
 import { escapeHtml, sanitizeUrl, CDK_INSIGHTS_ALLOWED_DOMAINS } from "../../../shared/utils/htmlSanitizer";
 
+interface RefundInfo {
+  refundProcessed: boolean;
+  refundAmount?: number; // in cents
+  refundCurrency?: string;
+  overageAmountNotRefunded?: number; // in cents
+}
+
+const formatCurrency = (amountInCents: number, currency: string): string => {
+  const currencySymbols: Record<string, string> = {
+    gbp: '£',
+    usd: '$',
+    eur: '€',
+  };
+  const symbol = currencySymbols[currency.toLowerCase()] || currency.toUpperCase() + ' ';
+  return `${symbol}${(amountInCents / 100).toFixed(2)}`;
+};
+
 export const subscriptionCancelledHtml = (
   displayName: string,
   endDate: string,
   resubscribeUrl: string,
+  refundInfo?: RefundInfo,
 ): string => {
   const safeDisplayName = escapeHtml(displayName);
   const safeEndDate = escapeHtml(endDate);
   const safeResubscribeUrl = sanitizeUrl(resubscribeUrl, CDK_INSIGHTS_ALLOWED_DOMAINS);
+
+  // Format refund amounts if present
+  const formattedRefundAmount = refundInfo?.refundProcessed && refundInfo.refundAmount && refundInfo.refundCurrency
+    ? formatCurrency(refundInfo.refundAmount, refundInfo.refundCurrency)
+    : undefined;
+  const formattedOverageAmount = refundInfo?.overageAmountNotRefunded && refundInfo.refundCurrency
+    ? formatCurrency(refundInfo.overageAmountNotRefunded, refundInfo.refundCurrency)
+    : undefined;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -48,10 +74,10 @@ export const subscriptionCancelledHtml = (
           <tr>
             <td align="center" style="padding: 0 24px 48px 24px;">
               <h1 style="margin: 0 0 16px 0; font-size: 32px; font-weight: 700; color: #fcf9f4; line-height: 1.2;">
-                We're sorry to see you go
+                ${refundInfo?.refundProcessed ? 'Refund Processed' : 'We\'re sorry to see you go'}
               </h1>
               <p style="margin: 0; font-size: 17px; color: #a8b5b0; line-height: 1.6;">
-                Hi ${safeDisplayName}, your CDK Insights subscription has been cancelled as requested.
+                Hi ${safeDisplayName}, your CDK Insights subscription has been cancelled${refundInfo?.refundProcessed ? ' and your refund is being processed' : ' as requested'}.
               </p>
             </td>
           </tr>
@@ -71,8 +97,8 @@ export const subscriptionCancelledHtml = (
                     <table cellpadding="0" cellspacing="0" border="0">
                       <tr>
                         <td>
-                          <p style="margin: 0 0 4px 0; font-size: 12px; color: #a8b5b0;">Access Until</p>
-                          <p style="margin: 0; font-size: 15px; font-weight: 600; color: #fcf9f4;">${safeEndDate}</p>
+                          <p style="margin: 0 0 4px 0; font-size: 12px; color: #a8b5b0;">${refundInfo?.refundProcessed ? 'Effective' : 'Access Until'}</p>
+                          <p style="margin: 0; font-size: 15px; font-weight: 600; color: #fcf9f4;">${refundInfo?.refundProcessed ? 'Immediately' : safeEndDate}</p>
                         </td>
                       </tr>
                     </table>
@@ -82,6 +108,36 @@ export const subscriptionCancelledHtml = (
             </td>
           </tr>
 
+          ${refundInfo?.refundProcessed ? `
+          <!-- Refund Card -->
+          <tr>
+            <td style="padding: 0 24px 32px 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0a1f1a; border: 1px solid #1a4d3e; border-radius: 16px;">
+                <tr>
+                  <td style="padding: 32px;">
+                    <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #4ade80;">
+                      Refund Confirmed
+                    </p>
+                    <p style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #4ade80;">
+                      ${formattedRefundAmount}
+                    </p>
+                    <p style="margin: 0; font-size: 14px; color: #a8b5b0; line-height: 1.5;">
+                      This refund will appear on your original payment method within 5-10 business days.
+                    </p>
+                    ${formattedOverageAmount ? `
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #1a4d3e;">
+                      <p style="margin: 0; font-size: 13px; color: #a8b5b0;">
+                        <strong style="color: #fcf9f4;">Note:</strong> Usage-based overage charges of ${formattedOverageAmount} were not included in the refund as these resources were consumed.
+                      </p>
+                    </div>
+                    ` : ''}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          ` : ''}
+
           <!-- Info Section -->
           <tr>
             <td style="padding: 0 24px 40px 24px;">
@@ -89,6 +145,40 @@ export const subscriptionCancelledHtml = (
                 What happens now
               </h2>
 
+              ${refundInfo?.refundProcessed ? `
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
+                <tr>
+                  <td width="32" valign="top">
+                    <span style="color: #88c1a8; font-size: 14px;">•</span>
+                  </td>
+                  <td style="padding-left: 8px;">
+                    <p style="margin: 0; font-size: 15px; color: #a8b5b0;">Your subscription has been cancelled immediately</p>
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
+                <tr>
+                  <td width="32" valign="top">
+                    <span style="color: #88c1a8; font-size: 14px;">•</span>
+                  </td>
+                  <td style="padding-left: 8px;">
+                    <p style="margin: 0; font-size: 15px; color: #a8b5b0;">Your refund will be processed within 5-10 business days</p>
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="32" valign="top">
+                    <span style="color: #88c1a8; font-size: 14px;">•</span>
+                  </td>
+                  <td style="padding-left: 8px;">
+                    <p style="margin: 0; font-size: 15px; color: #a8b5b0;">Your account has reverted to the free tier</p>
+                  </td>
+                </tr>
+              </table>
+              ` : `
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
                 <tr>
                   <td width="32" valign="top">
@@ -121,6 +211,7 @@ export const subscriptionCancelledHtml = (
                   </td>
                 </tr>
               </table>
+              `}
             </td>
           </tr>
 

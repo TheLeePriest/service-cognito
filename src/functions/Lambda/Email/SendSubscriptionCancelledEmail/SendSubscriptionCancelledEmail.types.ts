@@ -9,6 +9,13 @@ export const SendSubscriptionCancelledEmailDetailSchema = z.object({
   customerName: z.string().optional(),
   accessEndDate: z.string().min(1),
   reactivateUrl: z.string().min(1),
+  // Refund fields (optional - only present when a refund was processed)
+  refundProcessed: z.boolean().optional(),
+  refundAmount: z.number().optional(), // Amount in cents
+  refundCurrency: z.string().optional(), // e.g., 'gbp', 'usd'
+  overageAmountNotRefunded: z.number().optional(), // Overage amount that wasn't refunded (in cents)
+  // Cancellation type to differentiate trial expiry from user cancellation
+  cancellationType: z.enum(['user_cancelled', 'trial_expired', 'refund_requested', 'payment_failed']).optional(),
 });
 
 export type SendSubscriptionCancelledEmailDetail = z.infer<

@@ -41,13 +41,55 @@ export const sendSubscriptionCancelledEmail =
       CDK_INSIGHTS_ALLOWED_DOMAINS
     );
 
-    const subject = "Your CDK Insights subscription has been cancelled";
+    const subject = detail.refundProcessed
+      ? "Your CDK Insights subscription has been cancelled - Refund processed"
+      : "Your CDK Insights subscription has been cancelled";
+
+    const refundInfo = detail.refundProcessed ? {
+      refundProcessed: true,
+      refundAmount: detail.refundAmount,
+      refundCurrency: detail.refundCurrency,
+      overageAmountNotRefunded: detail.overageAmountNotRefunded,
+    } : undefined;
+
     const htmlBody = subscriptionCancelledHtml(
       displayName,
       detail.accessEndDate,
-      detail.reactivateUrl
+      detail.reactivateUrl,
+      refundInfo
     );
-    const textBody = `Hi ${displayName},
+    const formatCurrency = (amountInCents: number, currency: string): string => {
+      const currencySymbols: Record<string, string> = {
+        gbp: '£',
+        usd: '$',
+        eur: '€',
+      };
+      const symbol = currencySymbols[currency.toLowerCase()] || currency.toUpperCase() + ' ';
+      return `${symbol}${(amountInCents / 100).toFixed(2)}`;
+    };
+
+    let textBody: string;
+    if (detail.refundProcessed && detail.refundAmount && detail.refundCurrency) {
+      const refundAmountFormatted = formatCurrency(detail.refundAmount, detail.refundCurrency);
+      const overageNote = detail.overageAmountNotRefunded
+        ? `\nNote: Usage-based overage charges of ${formatCurrency(detail.overageAmountNotRefunded, detail.refundCurrency)} were not included in the refund as these resources were consumed.\n`
+        : '';
+
+      textBody = `Hi ${displayName},
+
+Your CDK Insights subscription has been cancelled and your refund is being processed.
+
+REFUND CONFIRMED: ${refundAmountFormatted}
+This refund will appear on your original payment method within 5-10 business days.
+${overageNote}
+Your subscription has been cancelled immediately and your account has reverted to the free tier.
+
+Changed your mind? Resubscribe here: ${safeReactivateUrl}
+
+If you have any questions, please contact us at support@cdkinsights.dev
+`;
+    } else {
+      textBody = `Hi ${displayName},
 
 Your CDK Insights subscription has been cancelled.
 
@@ -57,6 +99,7 @@ Changed your mind? Reactivate here: ${safeReactivateUrl}
 
 If you have any questions, please contact us at support@cdkinsights.dev
 `;
+    }
 
     logger.info("Sending subscription cancelled email", {
       ...context,
