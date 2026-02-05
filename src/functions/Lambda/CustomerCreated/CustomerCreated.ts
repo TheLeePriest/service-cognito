@@ -16,8 +16,10 @@ import { generateTempPassword } from "../../../shared/utils/generateTempPassword
 import { licensePurchaseHtml } from "../../../email/html/licensePurchase/licensePurchase";
 
 // Simple in-memory cache to avoid repeated Cognito lookups within Lambda warm instances
-const userExistenceCache = new Map<string, { exists: boolean; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+// Only caches positive results (user exists) to avoid race conditions where we cache
+// "not exists" and then try to create the same user multiple times
+const userExistenceCache = new Map<string, { exists: true; timestamp: number }>();
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes (reduced from 5 to minimize stale data)
 
 /** Truncates license key for safe logging */
 const truncateLicenseKey = (licenseKey: string): string => `${licenseKey.substring(0, 8)}...`;
@@ -26,14 +28,20 @@ const truncateLicenseKey = (licenseKey: string): string => `${licenseKey.substri
 const escapeForCognitoFilter = (value: string): string =>
 	value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 
+/** Marks a user as existing in the cache (call after successful creation) */
+const markUserAsExisting = (email: string): void => {
+	userExistenceCache.set(email, { exists: true, timestamp: Date.now() });
+};
+
 const checkUserExists = async (
 	cognitoClient: CustomerCreatedDependencies['cognitoClient'],
 	userPoolId: string,
 	email: string,
 ): Promise<boolean> => {
+	// Only use cache for positive results (user exists)
 	const cached = userExistenceCache.get(email);
 	if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-		return cached.exists;
+		return true; // Cached as existing
 	}
 
 	try {
@@ -47,7 +55,10 @@ const checkUserExists = async (
 
 		const exists = (listUsersResult.Users?.length ?? 0) > 0;
 
-		userExistenceCache.set(email, { exists, timestamp: Date.now() });
+		// Only cache positive results to avoid race conditions
+		if (exists) {
+			userExistenceCache.set(email, { exists: true, timestamp: Date.now() });
+		}
 		return exists;
 	} catch {
 		// If Cognito call fails, don't cache and return false to proceed with creation
@@ -272,6 +283,9 @@ export const customerCreated =
 		if (!createUserResult.User?.Username) {
 			throw new Error("Failed to create Cognito user - no username returned");
 		}
+
+		// Update cache to prevent duplicate creation attempts on warm Lambda instances
+		markUserAsExisting(customerEmail);
 
 		// Set password to force change on first login
 		await cognitoClient.send(
