@@ -21,6 +21,14 @@ import { TSLambdaFunction } from "the-ldk";
 import { EventBus, Rule } from "aws-cdk-lib/aws-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 import { StringParameter } from "aws-cdk-lib/aws-ssm";
+import { Queue } from "aws-cdk-lib/aws-sqs";
+import {
+	Alarm,
+	ComparisonOperator,
+	TreatMissingData,
+} from "aws-cdk-lib/aws-cloudwatch";
+import { SnsAction } from "aws-cdk-lib/aws-cloudwatch-actions";
+import { Topic } from "aws-cdk-lib/aws-sns";
 import { HostedZone } from "aws-cdk-lib/aws-route53";
 import { EmailIdentity, Identity } from "aws-cdk-lib/aws-ses";
 import { Effect } from "aws-cdk-lib/aws-iam";
@@ -39,6 +47,15 @@ export class ServiceCognitoStack extends Stack {
 			this,
 			`${serviceName}-event-bus-${stage}`,
 			eventBusName,
+		);
+
+		const eventHandlerDLQ = new Queue(
+			this,
+			`${serviceName}-event-handler-dlq-${stage}`,
+			{
+				queueName: `${serviceName}-event-handler-dlq-${stage}`,
+				retentionPeriod: Duration.days(14),
+			},
 		);
 
 		// Setup SES email identity only for production
@@ -342,7 +359,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		customerCreatedRule.addTarget(
-			new LambdaFunction(customerCreatedLambda.tsLambdaFunction),
+			new LambdaFunction(customerCreatedLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
 
 		// ============================================================================
@@ -415,7 +436,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		teamMemberActivatedRule.addTarget(
-			new LambdaFunction(teamMemberActivatedLambda.tsLambdaFunction),
+			new LambdaFunction(teamMemberActivatedLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
 
 		// ============================================================================
@@ -487,7 +512,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		sendTrialWillEndEmailRule.addTarget(
-			new LambdaFunction(sendTrialWillEndEmailLambda.tsLambdaFunction),
+			new LambdaFunction(sendTrialWillEndEmailLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
 
 		// ============================================================================
@@ -557,7 +586,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		sendLicenseUpgradedEmailRule.addTarget(
-			new LambdaFunction(sendLicenseUpgradedEmailLambda.tsLambdaFunction),
+			new LambdaFunction(sendLicenseUpgradedEmailLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
 
 		// ============================================================================
@@ -626,7 +659,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		sendPaymentFailedEmailRule.addTarget(
-			new LambdaFunction(sendPaymentFailedEmailLambda.tsLambdaFunction),
+			new LambdaFunction(sendPaymentFailedEmailLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
 
 		// ============================================================================
@@ -695,7 +732,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		sendTrialExpiredEmailRule.addTarget(
-			new LambdaFunction(sendTrialExpiredEmailLambda.tsLambdaFunction),
+			new LambdaFunction(sendTrialExpiredEmailLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
 
 		// ============================================================================
@@ -764,7 +805,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		sendSubscriptionCancelledEmailRule.addTarget(
-			new LambdaFunction(sendSubscriptionCancelledEmailLambda.tsLambdaFunction),
+			new LambdaFunction(sendSubscriptionCancelledEmailLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
 
 		// ============================================================================
@@ -833,7 +878,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		sendSubscriptionRenewalReminderEmailRule.addTarget(
-			new LambdaFunction(sendSubscriptionRenewalReminderEmailLambda.tsLambdaFunction),
+			new LambdaFunction(sendSubscriptionRenewalReminderEmailLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
 
 		// ============================================================================
@@ -902,7 +951,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		sendSubscriptionRenewedEmailRule.addTarget(
-			new LambdaFunction(sendSubscriptionRenewedEmailLambda.tsLambdaFunction),
+			new LambdaFunction(sendSubscriptionRenewedEmailLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
 
 		// ============================================================================
@@ -971,7 +1024,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		sendQuotaWarningEmailRule.addTarget(
-			new LambdaFunction(sendQuotaWarningEmailLambda.tsLambdaFunction),
+			new LambdaFunction(sendQuotaWarningEmailLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
 
 		// ============================================================================
@@ -1040,7 +1097,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		sendQuotaExceededEmailRule.addTarget(
-			new LambdaFunction(sendQuotaExceededEmailLambda.tsLambdaFunction),
+			new LambdaFunction(sendQuotaExceededEmailLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
 
 		// ============================================================================
@@ -1109,7 +1170,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		sendMonthlyUsageSummaryEmailRule.addTarget(
-			new LambdaFunction(sendMonthlyUsageSummaryEmailLambda.tsLambdaFunction),
+			new LambdaFunction(sendMonthlyUsageSummaryEmailLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
 
 		// ============================================================================
@@ -1178,7 +1243,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		sendReEngagementEmailRule.addTarget(
-			new LambdaFunction(sendReEngagementEmailLambda.tsLambdaFunction),
+			new LambdaFunction(sendReEngagementEmailLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
 
 		// ============================================================================
@@ -1247,7 +1316,11 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		sendFeatureAnnouncementEmailRule.addTarget(
-			new LambdaFunction(sendFeatureAnnouncementEmailLambda.tsLambdaFunction),
+			new LambdaFunction(sendFeatureAnnouncementEmailLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
 
 		// ============================================================================
@@ -1316,7 +1389,48 @@ export class ServiceCognitoStack extends Stack {
 		);
 
 		sendFeedbackRequestEmailRule.addTarget(
-			new LambdaFunction(sendFeedbackRequestEmailLambda.tsLambdaFunction),
+			new LambdaFunction(sendFeedbackRequestEmailLambda.tsLambdaFunction, {
+				deadLetterQueue: eventHandlerDLQ,
+				maxEventAge: Duration.hours(1),
+				retryAttempts: 2,
+			}),
 		);
+
+		// ============================================================================
+		// Centralised Alerting
+		// ============================================================================
+
+		const alertingTopicArn = StringParameter.fromStringParameterAttributes(
+			this,
+			`${serviceName}-alerting-topic-arn-${stage}`,
+			{ parameterName: `/${stage}/cdkinsights/alerting/sns-topic-arn` },
+		).stringValue;
+
+		const alertingTopic = Topic.fromTopicArn(
+			this,
+			`${serviceName}-alerting-topic-ref-${stage}`,
+			alertingTopicArn,
+		);
+
+		const dlqAlarm = new Alarm(
+			this,
+			`${serviceName}-event-handler-dlq-alarm-${stage}`,
+			{
+				alarmName: `${serviceName}-event-handler-dlq-alarm-${stage}`,
+				alarmDescription:
+					`[service-cognito] [${stage}] Failed event handler messages detected in DLQ. ` +
+					"Events failed processing after 2 retries and are queued for inspection. " +
+					"Check the target Lambda's CloudWatch logs to identify the root cause.",
+				metric: eventHandlerDLQ.metricApproximateNumberOfMessagesVisible({
+					period: Duration.minutes(5),
+				}),
+				threshold: 1,
+				evaluationPeriods: 1,
+				comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+				treatMissingData: TreatMissingData.NOT_BREACHING,
+			},
+		);
+
+		dlqAlarm.addAlarmAction(new SnsAction(alertingTopic));
 	}
 }
