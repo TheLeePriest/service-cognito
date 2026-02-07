@@ -1434,11 +1434,7 @@ export class ServiceCognitoStack extends Stack {
 		// Centralised Alerting
 		// ============================================================================
 
-		const alertingTopicArn = StringParameter.fromStringParameterAttributes(
-			this,
-			`${serviceName}-alerting-topic-arn-${stage}`,
-			{ parameterName: `/${stage}/cdkinsights/alerting/sns-topic-arn` },
-		).stringValue;
+		const alertingTopicArn = `arn:aws:sns:${Stack.of(this).region}:${Stack.of(this).account}:cdk-insights-platform-alerting-${stage}`;
 
 		const alertingTopic = Topic.fromTopicArn(
 			this,
