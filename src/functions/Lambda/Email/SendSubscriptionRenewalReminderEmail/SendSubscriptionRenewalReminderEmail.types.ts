@@ -37,4 +37,5 @@ export interface SendSubscriptionRenewalReminderEmailDependencies {
     fromEmail: string;
     replyToEmail?: string;
   };
+  consentChecker?: (email: string) => Promise<boolean>;
 }

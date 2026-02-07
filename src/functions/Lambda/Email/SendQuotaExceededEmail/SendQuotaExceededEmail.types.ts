@@ -34,4 +34,5 @@ export interface SendQuotaExceededEmailDependencies {
     fromEmail: string;
     replyToEmail?: string;
   };
+  consentChecker?: (email: string) => Promise<boolean>;
 }

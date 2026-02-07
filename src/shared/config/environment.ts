@@ -14,6 +14,10 @@ const EnvironmentSchema = z.object({
   SES_FROM_EMAIL: z.string().email().optional(),
   SES_REPLY_TO_EMAIL: z.string().email().optional(),
 
+  // Cross-service consent checking
+  CONSENT_TABLE_NAME: z.string().min(1).optional(),
+  USERS_TABLE_NAME: z.string().min(1).optional(),
+
   // AWS Lambda specific
   AWS_REGION: z.string().optional(),
   AWS_LAMBDA_FUNCTION_NAME: z.string().optional(),

@@ -32,4 +32,5 @@ export interface SendFeedbackRequestEmailDependencies {
     fromEmail: string;
     replyToEmail?: string;
   };
+  consentChecker?: (email: string) => Promise<boolean>;
 }

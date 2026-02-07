@@ -34,5 +34,6 @@ export interface SendTrialWillEndEmailDependencies {
     fromEmail: string;
     replyToEmail?: string;
   };
+  consentChecker?: (email: string) => Promise<boolean>;
 }
 

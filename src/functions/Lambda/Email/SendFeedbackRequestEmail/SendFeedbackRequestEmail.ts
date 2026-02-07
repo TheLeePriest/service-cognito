@@ -31,6 +31,17 @@ export const sendFeedbackRequestEmail =
       throw new Error("Invalid SendFeedbackRequestEmail payload");
     }
 
+    if (dependencies.consentChecker) {
+      const hasConsent = await dependencies.consentChecker(detail.customerEmail);
+      if (!hasConsent) {
+        logger.info("Email suppressed - user opted out", {
+          ...context,
+          to: detail.customerEmail,
+        });
+        return;
+      }
+    }
+
     const displayName =
       detail.customerName?.trim() ||
       detail.customerEmail.split("@")[0] ||

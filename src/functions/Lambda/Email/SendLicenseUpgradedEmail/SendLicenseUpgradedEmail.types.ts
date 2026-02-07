@@ -35,4 +35,5 @@ export interface SendLicenseUpgradedEmailDependencies {
     fromEmail: string;
     replyToEmail?: string;
   };
+  consentChecker?: (email: string) => Promise<boolean>;
 }

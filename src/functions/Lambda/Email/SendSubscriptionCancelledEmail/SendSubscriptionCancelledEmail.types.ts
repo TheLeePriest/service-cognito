@@ -41,4 +41,5 @@ export interface SendSubscriptionCancelledEmailDependencies {
     fromEmail: string;
     replyToEmail?: string;
   };
+  consentChecker?: (email: string) => Promise<boolean>;
 }

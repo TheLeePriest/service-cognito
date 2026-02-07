@@ -32,6 +32,7 @@ import { Topic } from "aws-cdk-lib/aws-sns";
 import { HostedZone } from "aws-cdk-lib/aws-route53";
 import { EmailIdentity, Identity } from "aws-cdk-lib/aws-ses";
 import { Effect } from "aws-cdk-lib/aws-iam";
+import { Table } from "aws-cdk-lib/aws-dynamodb";
 
 export class ServiceCognitoStack extends Stack {
 	public readonly userPoolClient: UserPoolClient;
@@ -1395,6 +1396,48 @@ export class ServiceCognitoStack extends Stack {
 				retryAttempts: 2,
 			}),
 		);
+
+		// ============================================================================
+		// Consent Checking — cross-service DynamoDB access
+		// ============================================================================
+
+		const consentTableName = StringParameter.fromStringParameterAttributes(
+			this,
+			`${serviceName}-consent-table-name-${stage}`,
+			{ parameterName: `/${stage}/cdkinsights/consent/table-name` },
+		).stringValue;
+
+		const usersTableName = StringParameter.fromStringParameterAttributes(
+			this,
+			`${serviceName}-users-table-name-${stage}`,
+			{ parameterName: `/${stage}/cdkinsights/users/table-name` },
+		).stringValue;
+
+		const consentTable = Table.fromTableName(this, "ConsentTableRef", consentTableName);
+		const usersTable = Table.fromTableName(this, "UsersTableRef", usersTableName);
+
+		const emailLambdas = [
+			sendTrialWillEndEmailLambda,
+			sendLicenseUpgradedEmailLambda,
+			sendPaymentFailedEmailLambda,
+			sendTrialExpiredEmailLambda,
+			sendSubscriptionCancelledEmailLambda,
+			sendSubscriptionRenewalReminderEmailLambda,
+			sendSubscriptionRenewedEmailLambda,
+			sendQuotaWarningEmailLambda,
+			sendQuotaExceededEmailLambda,
+			sendMonthlyUsageSummaryEmailLambda,
+			sendReEngagementEmailLambda,
+			sendFeatureAnnouncementEmailLambda,
+			sendFeedbackRequestEmailLambda,
+		];
+
+		for (const lambda of emailLambdas) {
+			lambda.tsLambdaFunction.addEnvironment("CONSENT_TABLE_NAME", consentTableName);
+			lambda.tsLambdaFunction.addEnvironment("USERS_TABLE_NAME", usersTableName);
+			consentTable.grantReadData(lambda.tsLambdaFunction);
+			usersTable.grantReadData(lambda.tsLambdaFunction);
+		}
 
 		// ============================================================================
 		// Centralised Alerting
