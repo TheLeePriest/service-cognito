@@ -1401,17 +1401,8 @@ export class ServiceCognitoStack extends Stack {
 		// Consent Checking — cross-service DynamoDB access
 		// ============================================================================
 
-		const consentTableName = StringParameter.fromStringParameterAttributes(
-			this,
-			`${serviceName}-consent-table-name-${stage}`,
-			{ parameterName: `/${stage}/cdkinsights/consent/table-name` },
-		).stringValue;
-
-		const usersTableName = StringParameter.fromStringParameterAttributes(
-			this,
-			`${serviceName}-users-table-name-${stage}`,
-			{ parameterName: `/${stage}/cdkinsights/users/table-name` },
-		).stringValue;
+		const consentTableName = `cdk-insights-consent-${stage}`;
+		const usersTableName = `cdk-insights-users-${stage}`;
 
 		const consentTable = Table.fromTableName(this, "ConsentTableRef", consentTableName);
 		const usersTable = Table.fromTableName(this, "UsersTableRef", usersTableName);
