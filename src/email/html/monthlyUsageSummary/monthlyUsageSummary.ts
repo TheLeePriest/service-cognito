@@ -1,4 +1,4 @@
-import { escapeHtml, sanitizeUrl, CDK_INSIGHTS_ALLOWED_DOMAINS } from "../../../shared/utils/htmlSanitizer";
+import { escapeHtml, sanitizeUrl, getPreferencesUrl, CDK_INSIGHTS_ALLOWED_DOMAINS } from "../../../shared/utils/htmlSanitizer";
 
 export interface UsageSummaryData {
   totalScans: number;
@@ -22,6 +22,7 @@ export const monthlyUsageSummaryHtml = (
   const safeMonth = escapeHtml(month);
   const safeYear = escapeHtml(year);
   const safeDashboardUrl = sanitizeUrl(dashboardUrl, CDK_INSIGHTS_ALLOWED_DOMAINS);
+  const safePreferencesUrl = getPreferencesUrl(dashboardUrl);
 
   const topServicesHtml = usage.topServices.slice(0, 5).map(service => `
     <tr>
@@ -202,7 +203,10 @@ export const monthlyUsageSummaryHtml = (
               <a href="mailto:support@cdkinsights.dev" style="font-size: 14px; color: #88c1a8; text-decoration: none;">
                 support@cdkinsights.dev
               </a>
-              <p style="margin: 24px 0 0 0; font-size: 12px; color: #586970;">
+              <p style="margin: 16px 0 0 0; font-size: 12px;">
+                <a href="${safePreferencesUrl}" style="color: #586970; text-decoration: underline;">Manage email preferences</a>
+              </p>
+              <p style="margin: 8px 0 0 0; font-size: 12px; color: #586970;">
                 © ${new Date().getFullYear()} CDK Insights. All rights reserved.
               </p>
             </td>

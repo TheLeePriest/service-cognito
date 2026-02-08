@@ -1,4 +1,4 @@
-import { escapeHtml, sanitizeUrl, CDK_INSIGHTS_ALLOWED_DOMAINS } from "../../../shared/utils/htmlSanitizer";
+import { escapeHtml, sanitizeUrl, getPreferencesUrl, CDK_INSIGHTS_ALLOWED_DOMAINS } from "../../../shared/utils/htmlSanitizer";
 
 interface RefundInfo {
   refundProcessed: boolean;
@@ -26,6 +26,7 @@ export const subscriptionCancelledHtml = (
   const safeDisplayName = escapeHtml(displayName);
   const safeEndDate = escapeHtml(endDate);
   const safeResubscribeUrl = sanitizeUrl(resubscribeUrl, CDK_INSIGHTS_ALLOWED_DOMAINS);
+  const safePreferencesUrl = getPreferencesUrl(resubscribeUrl);
 
   // Format refund amounts if present
   const formattedRefundAmount = refundInfo?.refundProcessed && refundInfo.refundAmount && refundInfo.refundCurrency
@@ -270,7 +271,10 @@ export const subscriptionCancelledHtml = (
               <a href="mailto:support@cdkinsights.dev" style="font-size: 14px; color: #88c1a8; text-decoration: none;">
                 support@cdkinsights.dev
               </a>
-              <p style="margin: 24px 0 0 0; font-size: 12px; color: #586970;">
+              <p style="margin: 16px 0 0 0; font-size: 12px;">
+                <a href="${safePreferencesUrl}" style="color: #586970; text-decoration: underline;">Manage email preferences</a>
+              </p>
+              <p style="margin: 8px 0 0 0; font-size: 12px; color: #586970;">
                 © ${new Date().getFullYear()} CDK Insights. All rights reserved.
               </p>
             </td>

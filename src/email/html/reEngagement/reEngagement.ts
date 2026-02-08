@@ -1,4 +1,4 @@
-import { escapeHtml, sanitizeUrl, CDK_INSIGHTS_ALLOWED_DOMAINS } from "../../../shared/utils/htmlSanitizer";
+import { escapeHtml, sanitizeUrl, getPreferencesUrl, CDK_INSIGHTS_ALLOWED_DOMAINS } from "../../../shared/utils/htmlSanitizer";
 
 export const reEngagementHtml = (
   displayName: string,
@@ -7,6 +7,7 @@ export const reEngagementHtml = (
 ): string => {
   const safeDisplayName = escapeHtml(displayName);
   const safeDashboardUrl = sanitizeUrl(dashboardUrl, CDK_INSIGHTS_ALLOWED_DOMAINS);
+  const safePreferencesUrl = getPreferencesUrl(dashboardUrl);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -160,8 +161,8 @@ export const reEngagementHtml = (
               <p style="margin: 0 0 8px 0; font-size: 14px; color: #a8b5b0;">
                 Don't want these reminders?
               </p>
-              <a href="${safeDashboardUrl}/settings" style="font-size: 14px; color: #88c1a8; text-decoration: none;">
-                Update your notification preferences
+              <a href="${safePreferencesUrl}" style="font-size: 14px; color: #88c1a8; text-decoration: none;">
+                Manage email preferences
               </a>
               <p style="margin: 24px 0 0 0; font-size: 12px; color: #586970;">
                 © ${new Date().getFullYear()} CDK Insights. All rights reserved.

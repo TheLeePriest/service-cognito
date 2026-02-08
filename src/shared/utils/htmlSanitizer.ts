@@ -137,3 +137,19 @@ export const CDK_INSIGHTS_ALLOWED_DOMAINS = [
   "dev.cdkinsights.dev",
   "localhost",
 ];
+
+/**
+ * Derives the email preferences page URL from any CDK Insights URL.
+ * Extracts the origin and appends /account.
+ *
+ * @param siteUrl - Any CDK Insights URL (dashboard, upgrade, etc.)
+ * @returns The preferences/account URL for the same environment
+ */
+export function getPreferencesUrl(siteUrl: string): string {
+  try {
+    const url = new URL(siteUrl);
+    return `${url.origin}/account`;
+  } catch {
+    return "https://cdkinsights.dev/account";
+  }
+}

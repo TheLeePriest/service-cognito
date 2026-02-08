@@ -1,4 +1,4 @@
-import { escapeHtml, sanitizeUrl, CDK_INSIGHTS_ALLOWED_DOMAINS } from "../../../shared/utils/htmlSanitizer";
+import { escapeHtml, sanitizeUrl, getPreferencesUrl, CDK_INSIGHTS_ALLOWED_DOMAINS } from "../../../shared/utils/htmlSanitizer";
 
 export const paymentFailedHtml = (
   displayName: string,
@@ -11,6 +11,7 @@ export const paymentFailedHtml = (
   const safeAmount = escapeHtml(amount);
   const safeCurrency = escapeHtml(currency);
   const safeUpdatePaymentUrl = sanitizeUrl(updatePaymentUrl, CDK_INSIGHTS_ALLOWED_DOMAINS);
+  const safePreferencesUrl = getPreferencesUrl(updatePaymentUrl);
   const safeFailureReason = escapeHtml(failureReason || "Your payment method was declined");
 
   return `<!DOCTYPE html>
@@ -169,7 +170,10 @@ export const paymentFailedHtml = (
               <a href="mailto:support@cdkinsights.dev" style="font-size: 14px; color: #88c1a8; text-decoration: none;">
                 support@cdkinsights.dev
               </a>
-              <p style="margin: 24px 0 0 0; font-size: 12px; color: #586970;">
+              <p style="margin: 16px 0 0 0; font-size: 12px;">
+                <a href="${safePreferencesUrl}" style="color: #586970; text-decoration: underline;">Manage email preferences</a>
+              </p>
+              <p style="margin: 8px 0 0 0; font-size: 12px; color: #586970;">
                 © ${new Date().getFullYear()} CDK Insights. All rights reserved.
               </p>
             </td>
